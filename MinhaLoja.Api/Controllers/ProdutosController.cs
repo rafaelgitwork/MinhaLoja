@@ -5,6 +5,7 @@ namespace MinhaLoja.Api.Controllers;
 
 [ApiController]
 [Route("api/produtos")]
+
 public class ProdutosController : ControllerBase
 {
     [HttpGet]
