@@ -65,4 +65,22 @@ public class CategoriasController : ControllerBase
             new { id = categoria.Id },
             response);
     }
+
+    [HttpGet]
+    public async Task<ActionResult<List<CategoriaResponse>>> Listar()
+    {
+        var categorias = await _context.Categorias
+            .AsNoTracking()
+            .Where(c => c.Ativa)
+            .OrderBy(c => c.Nome)
+            .Select(c => new CategoriaResponse
+            {
+                Id = c.Id,
+                Nome = c.Nome,
+                Ativa = c.Ativa
+            })
+            .ToListAsync();
+
+        return Ok(categorias);
+    }
 }
