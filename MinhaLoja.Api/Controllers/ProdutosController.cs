@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MinhaLoja.Api.Data;
 using MinhaLoja.Shared.DTOs.Produtos;
 
 namespace MinhaLoja.Api.Controllers;
@@ -8,19 +10,29 @@ namespace MinhaLoja.Api.Controllers;
 
 public class ProdutosController : ControllerBase
 {
-    [HttpGet]
-    public ActionResult<List<ProdutoResponse>> Listar()
+    private readonly MinhaLojaDbContext _context;
+
+    public ProdutosController(MinhaLojaDbContext context)
     {
-        var produtos = new List<ProdutoResponse>
-        {
-            new ProdutoResponse
+        _context = context;
+    }
+
+    [HttpGet]
+
+    public async Task<ActionResult<List<ProdutoResponse>>> Listar()
+    {
+        var produtos = await _context.Produtos
+            .AsNoTracking()
+            .Where(p => p.Ativo && p.Categoria.Ativa)
+            .OrderBy(p => p.Nome)
+            .Select(p => new ProdutoResponse
             {
-                Id = 1,
-                Nome = "Detergente neutro 500 ml",
-                Preco = 3.50m,
-                QuantidadeEstoque = 20
-            }
-        };
+                Id = p.Id,
+                Nome = p.Nome,
+                Preco = p.Preco,
+                QuantidadeEstoque = p.QuantidadeEstoque
+            })
+            .ToListAsync();
 
         return Ok(produtos);
     }
