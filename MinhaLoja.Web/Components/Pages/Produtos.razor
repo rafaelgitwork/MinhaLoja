@@ -1,0 +1,70 @@
+﻿@page "/produtos"
+@using MinhaLoja.Shared.DTOs.Produtos
+@using MinhaLoja.Web.Services
+@using System.Globalization
+@inject ProdutoWebService ProdutoService
+
+<PageTitle>Produtos | MinhaLoja</PageTitle>
+
+<h1>Produtos</h1>
+
+@if (_erro is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_erro
+    </div>
+}
+else if (_produtos is null)
+{
+    <p>Carregando produtos...</p>
+}
+else if (_produtos.Count == 0)
+{
+    <p>Nenhum produto disponível.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var produto in _produtos)
+            {
+                <tr>
+                    <td>@produto.Nome</td>
+                    <td>@produto.Preco.ToString("C2", CulturaBrasileira)</td>
+                    <td>@produto.QuantidadeEstoque</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private static readonly CultureInfo CulturaBrasileira =
+        CultureInfo.GetCultureInfo("pt-BR");
+
+    private List<ProdutoResponse>? _produtos;
+    private string? _erro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _produtos = await ProdutoService.ListarAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _erro = "Não foi possível carregar os produtos. Verifique se a API está rodando.";
+        }
+        catch (TaskCanceledException)
+        {
+            _erro = "A consulta demorou demais. Atualize a página para tentar novamente.";
+        }
+    }
+}
