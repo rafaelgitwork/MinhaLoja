@@ -15,6 +15,8 @@ public class MinhaLojaDbContext : DbContext
 
     public DbSet<Produto> Produtos => Set<Produto>();
 
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -50,6 +52,36 @@ public class MinhaLojaDbContext : DbContext
                 .WithMany(c => c.Produtos)
                 .HasForeignKey(p => p.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Usuario>(usuario =>
+        {
+            usuario.ToTable("Usuarios");
+
+            usuario.HasKey(u => u.Id);
+
+            usuario.Property(u => u.Nome)
+                .IsRequired()
+                .HasMaxLength(150);
+
+            usuario.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(254);
+
+            usuario.Property(u => u.EmailNormalizado)
+                .IsRequired()
+                .HasMaxLength(254);
+
+            usuario.HasIndex(u => u.EmailNormalizado)
+                .IsUnique();
+
+            usuario.Property(u => u.SenhaHash)
+                .IsRequired()
+                .HasMaxLength(512);
+
+            usuario.Property(u => u.Perfil)
+                .IsRequired()
+                .HasMaxLength(20);
         });
     }
 }

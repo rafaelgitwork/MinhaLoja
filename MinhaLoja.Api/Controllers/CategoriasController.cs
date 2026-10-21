@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinhaLoja.Api.Data;
 using MinhaLoja.Api.Entities;
@@ -15,6 +16,24 @@ public class CategoriasController : ControllerBase
     public CategoriasController(MinhaLojaDbContext context)
     {
         _context = context;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<CategoriaResponse>>> Listar()
+    {
+        var categorias = await _context.Categorias
+            .AsNoTracking()
+            .Where(c => c.Ativa)
+            .OrderBy(c => c.Nome)
+            .Select(c => new CategoriaResponse
+            {
+                Id = c.Id,
+                Nome = c.Nome,
+                Ativa = c.Ativa
+            })
+            .ToListAsync();
+
+        return Ok(categorias);
     }
 
     [HttpGet("{id:int}")]
@@ -39,6 +58,7 @@ public class CategoriasController : ControllerBase
         return Ok(categoria);
     }
 
+    [Authorize(Roles = "Funcionario,Administrador")]
     [HttpPost]
     public async Task<ActionResult<CategoriaResponse>> Criar(
         CategoriaCreateRequest request)
@@ -64,23 +84,5 @@ public class CategoriasController : ControllerBase
             nameof(ObterPorId),
             new { id = categoria.Id },
             response);
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<List<CategoriaResponse>>> Listar()
-    {
-        var categorias = await _context.Categorias
-            .AsNoTracking()
-            .Where(c => c.Ativa)
-            .OrderBy(c => c.Nome)
-            .Select(c => new CategoriaResponse
-            {
-                Id = c.Id,
-                Nome = c.Nome,
-                Ativa = c.Ativa
-            })
-            .ToListAsync();
-
-        return Ok(categorias);
     }
 }

@@ -1,14 +1,14 @@
-﻿using MinhaLoja.Api.Entities;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinhaLoja.Api.Data;
+using MinhaLoja.Api.Entities;
 using MinhaLoja.Shared.DTOs.Produtos;
 
 namespace MinhaLoja.Api.Controllers;
 
 [ApiController]
 [Route("api/produtos")]
-
 public class ProdutosController : ControllerBase
 {
     private readonly MinhaLojaDbContext _context;
@@ -17,8 +17,6 @@ public class ProdutosController : ControllerBase
     {
         _context = context;
     }
-
-    [HttpGet]
 
     [HttpGet]
     public async Task<ActionResult<List<ProdutoResponse>>> Listar()
@@ -41,9 +39,35 @@ public class ProdutosController : ControllerBase
         return Ok(produtos);
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<ProdutoResponse>> ObterPorId(int id)
+    {
+        var produto = await _context.Produtos
+            .AsNoTracking()
+            .Where(p => p.Id == id && p.Ativo && p.Categoria.Ativa)
+            .Select(p => new ProdutoResponse
+            {
+                Id = p.Id,
+                Nome = p.Nome,
+                Descricao = p.Descricao,
+                Preco = p.Preco,
+                QuantidadeEstoque = p.QuantidadeEstoque,
+                CategoriaId = p.CategoriaId
+            })
+            .FirstOrDefaultAsync();
+
+        if (produto is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(produto);
+    }
+
+    [Authorize(Roles = "Funcionario,Administrador")]
     [HttpPost]
     public async Task<ActionResult<ProdutoResponse>> Criar(
-    ProdutoCreateRequest request)
+        ProdutoCreateRequest request)
     {
         if (decimal.Round(request.Preco, 2) != request.Preco)
         {
@@ -93,35 +117,11 @@ public class ProdutosController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, response);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<ProdutoResponse>> ObterPorId(int id)
-    {
-        var produto = await _context.Produtos
-            .AsNoTracking()
-            .Where(p => p.Id == id && p.Ativo && p.Categoria.Ativa)
-            .Select(p => new ProdutoResponse
-            {
-                Id = p.Id,
-                Nome = p.Nome,
-                Descricao = p.Descricao,
-                Preco = p.Preco,
-                QuantidadeEstoque = p.QuantidadeEstoque,
-                CategoriaId = p.CategoriaId
-            })
-            .FirstOrDefaultAsync();
-
-        if (produto is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(produto);
-    }
-
+    [Authorize(Roles = "Funcionario,Administrador")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Atualizar(
-    int id,
-    ProdutoUpdateRequest request)
+        int id,
+        ProdutoUpdateRequest request)
     {
         var produto = await _context.Produtos
             .FirstOrDefaultAsync(p => p.Id == id && p.Ativo);
@@ -161,5 +161,4 @@ public class ProdutosController : ControllerBase
 
         return NoContent();
     }
-
 }
