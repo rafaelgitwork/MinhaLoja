@@ -34,6 +34,7 @@ else
                 <th>Nome</th>
                 <th>Preço</th>
                 <th>Estoque</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -43,6 +44,12 @@ else
                     <td>@produto.Nome</td>
                     <td>@produto.Preco.ToString("C2", CulturaBrasileira)</td>
                     <td>@produto.QuantidadeEstoque</td>
+                    <td>
+                        <a href="@($"/produtos/{produto.Id}/editar")"
+                           class="btn btn-outline-primary btn-sm">
+                            Editar
+                        </a>
+                    </td>
                 </tr>
             }
         </tbody>
