@@ -1,0 +1,162 @@
+﻿@page "/produtos/novo"
+@rendermode InteractiveServer
+@using MinhaLoja.Shared.DTOs.Produtos
+@using MinhaLoja.Shared.DTOs.Categorias
+@using MinhaLoja.Web.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject ProdutoWebService ProdutoService
+@inject CategoriaWebService CategoriaService
+@inject NavigationManager Navigation
+
+<PageTitle>Novo produto | MinhaLoja</PageTitle>
+
+<h1>Novo produto</h1>
+
+@if (_erros.Length > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+            @foreach (var erro in _erros)
+            {
+                <li>@erro</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (_carregando)
+{
+    <p>Carregando categorias...</p>
+}
+else if (_categorias.Count == 0)
+{
+    <p>Não há categorias disponíveis. Confira o cadastro e atualize a página.</p>
+}
+else
+{
+    <EditForm Model="_produto"
+              OnValidSubmit="SalvarAsync"
+              FormName="novo-produto">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <fieldset disabled="@_salvando">
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome</label>
+                <InputText id="nome" class="form-control"
+                           @bind-Value="_produto.Nome" />
+            </div>
+
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descrição</label>
+                <InputTextArea id="descricao" class="form-control"
+                               @bind-Value="_produto.Descricao" />
+            </div>
+
+            <div class="mb-3">
+                <label for="preco" class="form-label">Preço (R$)</label>
+                <InputNumber id="preco" class="form-control"
+                             step="0.01"
+                             @bind-Value="_produto.Preco" />
+            </div>
+
+            <div class="mb-3">
+                <label for="estoque" class="form-label">Estoque inicial</label>
+                <InputNumber id="estoque" class="form-control"
+                             @bind-Value="_produto.QuantidadeEstoque" />
+            </div>
+
+            <div class="mb-3">
+                <label for="categoria" class="form-label">Categoria</label>
+                <InputSelect id="categoria" class="form-select"
+                             @bind-Value="_produto.CategoriaId">
+                    <option value="0">Selecione uma categoria</option>
+
+                    @foreach (var categoria in _categorias)
+                    {
+                        <option value="@categoria.Id">
+                            @categoria.Nome
+                        </option>
+                    }
+                </InputSelect>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                @(_salvando ? "Salvando..." : "Salvar produto")
+            </button>
+        </fieldset>
+    </EditForm>
+}
+
+<a href="/produtos" class="d-inline-block mt-3">
+    Voltar para produtos
+</a>
+
+@code {
+    private readonly ProdutoCreateRequest _produto = new();
+    private List<CategoriaResponse> _categorias = new();
+    private string[] _erros = Array.Empty<string>();
+    private bool _carregando = true;
+    private bool _salvando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _categorias = await CategoriaService.ListarAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _erros = new[] { "Não foi possível carregar as categorias." };
+        }
+        catch (TaskCanceledException)
+        {
+            _erros = new[] { "A consulta de categorias demorou demais." };
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (_salvando)
+        {
+            return;
+        }
+
+        _salvando = true;
+        _erros = Array.Empty<string>();
+
+        try
+        {
+            _erros = await ProdutoService.CriarAsync(_produto);
+
+            if (_erros.Length == 0)
+            {
+                Navigation.NavigateTo("/produtos");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            _erros = new[]
+            {
+                "A comunicação falhou. Confira a lista de produtos antes de tentar novamente."
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            _erros = new[]
+            {
+                "O tempo de espera terminou. Confira a lista antes de repetir o cadastro."
+            };
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+}
