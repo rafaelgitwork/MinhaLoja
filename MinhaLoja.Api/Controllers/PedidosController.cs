@@ -102,4 +102,76 @@ public class PedidosController : ControllerBase
             }).ToList()
         });
     }
+
+    [HttpGet]
+    public async Task<ActionResult<List<PedidoResponse>>> ListarMeusPedidos(
+    CancellationToken cancellationToken,
+    [FromQuery] int pagina = 1,
+    [FromQuery] int tamanhoPagina = 10)
+    {
+        if (!int.TryParse(User.FindFirst("sub")?.Value, out var usuarioId))
+        {
+            return Unauthorized();
+        }
+
+        if (pagina < 1 || pagina > 1000000)
+        {
+            ModelState.AddModelError(
+                nameof(pagina),
+                "A página deve estar entre 1 e 1000000.");
+        }
+
+        if (tamanhoPagina < 1 || tamanhoPagina > 50)
+        {
+            ModelState.AddModelError(
+                nameof(tamanhoPagina),
+                "O tamanho da página deve estar entre 1 e 50.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        var clienteAtivo = await _context.Usuarios.AnyAsync(
+            u => u.Id == usuarioId && u.Ativo && u.Perfil == "Cliente",
+            cancellationToken);
+
+        if (!clienteAtivo)
+        {
+            return Forbid();
+        }
+
+        var pedidos = await _context.Pedidos
+            .AsNoTracking()
+            .Where(p => p.UsuarioId == usuarioId)
+            .OrderByDescending(p => p.CriadoEmUtc)
+            .ThenByDescending(p => p.Id)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .Include(p => p.Itens)
+            .ToListAsync(cancellationToken);
+
+        var response = pedidos.Select(p => new PedidoResponse
+        {
+            Id = p.Id,
+            CriadoEmUtc = DateTime.SpecifyKind(
+                p.CriadoEmUtc, DateTimeKind.Utc),
+            Status = p.Status,
+            Observacao = p.Observacao,
+            Total = p.Total,
+            Itens = p.Itens
+                .OrderBy(i => i.Id)
+                .Select(i => new PedidoItemResponse
+                {
+                    ProdutoId = i.ProdutoId,
+                    NomeProduto = i.NomeProduto,
+                    PrecoUnitario = i.PrecoUnitario,
+                    Quantidade = i.Quantidade
+                })
+                .ToList()
+        }).ToList();
+
+        return Ok(response);
+    }
 }
