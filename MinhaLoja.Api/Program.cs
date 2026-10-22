@@ -68,6 +68,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddScoped<PedidoService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
