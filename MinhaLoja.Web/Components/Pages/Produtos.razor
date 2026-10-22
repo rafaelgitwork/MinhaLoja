@@ -1,4 +1,5 @@
-﻿@page "/produtos"
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@page "/produtos"
 @using MinhaLoja.Shared.DTOs.Produtos
 @using MinhaLoja.Web.Services
 @using System.Globalization
@@ -7,6 +8,18 @@
 <PageTitle>Produtos | MinhaLoja</PageTitle>
 
 <h1>Produtos</h1>
+
+<AuthorizeView>
+    <Authorized Context="sessao">
+        <p>Conectado como: <strong>@sessao.User.Identity?.Name</strong></p>
+    </Authorized>
+    <NotAuthorized>
+        <p>
+            Você não está conectado.
+            <a href="/login" data-enhance-nav="false">Entrar no painel</a>
+        </p>
+    </NotAuthorized>
+</AuthorizeView>
 
 <a href="/produtos/novo" class="btn btn-primary mb-3">
     Novo produto

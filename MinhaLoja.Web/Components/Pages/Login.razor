@@ -1,0 +1,117 @@
+﻿@page "/login"
+@attribute [ExcludeFromInteractiveRouting]
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Http
+@using MinhaLoja.Shared.DTOs.Auth
+@using MinhaLoja.Web.Services
+@inject AuthWebService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Entrar | MinhaLoja</PageTitle>
+
+<h1>Entrar no painel</h1>
+
+@if (_erro is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_erro
+    </div>
+}
+
+<EditForm Model="Dados"
+          OnValidSubmit="EntrarAsync"
+          FormName="login"
+          method="post">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="email" class="form-label">E-mail</label>
+        <InputText id="email"
+                   type="email"
+                   class="form-control"
+                   autocomplete="username"
+                   @bind-Value="Dados.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="senha" class="form-label">Senha</label>
+        <InputText id="senha"
+                   type="password"
+                   class="form-control"
+                   autocomplete="current-password"
+                   @bind-Value="Dados.Senha" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Entrar
+    </button>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "login")]
+    private LoginRequest Dados { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Dados ??= new LoginRequest();
+    }
+
+    private string? _erro;
+
+    private async Task EntrarAsync()
+    {
+        var resultado = await AuthService.LoginAsync(Dados);
+
+        Dados.Senha = string.Empty;
+
+        if (resultado.Login is null)
+        {
+            _erro = resultado.Erro ?? "Não foi possível entrar.";
+            return;
+        }
+
+        var login = resultado.Login;
+
+        var claims = new List<Claim>
+        {
+            new Claim(
+                ClaimTypes.NameIdentifier,
+                login.Usuario.Id.ToString()),
+
+            new Claim(ClaimTypes.Name, login.Usuario.Nome),
+            new Claim(ClaimTypes.Role, login.Usuario.Perfil),
+
+            new Claim("api_token", login.Token),
+
+            new Claim(
+                "api_expira_em",
+                login.ExpiraEm.ToUnixTimeSeconds().ToString())
+        };
+
+        var identidade = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var propriedades = new AuthenticationProperties
+        {
+            IsPersistent = false,
+            AllowRefresh = false,
+            ExpiresUtc = login.ExpiraEm
+        };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identidade),
+            propriedades);
+
+        Navigation.NavigateTo("/produtos", forceLoad: true);
+    }
+}
