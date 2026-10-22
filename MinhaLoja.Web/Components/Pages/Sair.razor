@@ -1,0 +1,49 @@
+﻿@page "/sair"
+@attribute [ExcludeFromInteractiveRouting]
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Http
+@inject NavigationManager Navigation
+
+<PageTitle>Sair | MinhaLoja</PageTitle>
+
+<h1>Sair do painel</h1>
+
+@if (HttpContext.User.Identity?.IsAuthenticated == true)
+{
+    <p>Você está conectado como @HttpContext.User.Identity?.Name.</p>
+
+    <form method="post"
+          @formname="sair"
+          @onsubmit="EncerrarSessaoAsync">
+
+        <AntiforgeryToken />
+
+        <button type="submit" class="btn btn-danger">
+            Confirmar saída
+        </button>
+    </form>
+
+    <a href="/produtos" class="d-inline-block mt-3">
+        Continuar no painel
+    </a>
+}
+else
+{
+    <p>Você não está conectado.</p>
+    <a href="/login" data-enhance-nav="false">Entrar no painel</a>
+}
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private async Task EncerrarSessaoAsync()
+    {
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

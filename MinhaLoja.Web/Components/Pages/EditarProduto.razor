@@ -8,6 +8,8 @@
 @inject ProdutoWebService ProdutoService
 @inject CategoriaWebService CategoriaService
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Funcionario,Administrador")]
 
 <PageTitle>Editar produto | MinhaLoja</PageTitle>
 

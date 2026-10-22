@@ -11,19 +11,33 @@
 
 <AuthorizeView>
     <Authorized Context="sessao">
-        <p>Conectado como: <strong>@sessao.User.Identity?.Name</strong></p>
+        <p>
+            Conectado como:
+            <strong>@sessao.User.Identity?.Name</strong>
+
+            <a href="/sair"
+               data-enhance-nav="false"
+               class="ms-3">
+                Sair
+            </a>
+        </p>
     </Authorized>
+
     <NotAuthorized>
         <p>
             Você não está conectado.
-            <a href="/login" data-enhance-nav="false">Entrar no painel</a>
+            <a href="/login" data-enhance-nav="false">
+                Entrar no painel
+            </a>
         </p>
     </NotAuthorized>
 </AuthorizeView>
 
-<a href="/produtos/novo" class="btn btn-primary mb-3">
-    Novo produto
-</a>
+<AuthorizeView Roles="Funcionario,Administrador">
+    <a href="/produtos/novo" class="btn btn-primary mb-3">
+        Novo produto
+    </a>
+</AuthorizeView>
 
 @if (_erro is not null)
 {
@@ -50,22 +64,35 @@ else
                 <th>Ações</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach (var produto in _produtos)
-            {
-                <tr>
-                    <td>@produto.Nome</td>
-                    <td>@produto.Preco.ToString("C2", CulturaBrasileira)</td>
-                    <td>@produto.QuantidadeEstoque</td>
-                    <td>
+<tbody>
+    @foreach (var produto in _produtos)
+    {
+        <tr>
+            <td>@produto.Nome</td>
+
+            <td>
+                @produto.Preco.ToString("C2", CulturaBrasileira)
+            </td>
+
+            <td>@produto.QuantidadeEstoque</td>
+
+            <td>
+                <AuthorizeView Roles="Funcionario,Administrador">
+                    <Authorized>
                         <a href="@($"/produtos/{produto.Id}/editar")"
                            class="btn btn-outline-primary btn-sm">
                             Editar
                         </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
+                    </Authorized>
+
+                    <NotAuthorized>
+                        <span class="text-muted">Sem permissão</span>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </td>
+        </tr>
+    }
+</tbody>
     </table>
 }
 
