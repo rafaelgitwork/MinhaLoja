@@ -17,6 +17,10 @@ public class MinhaLojaDbContext : DbContext
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
+    public DbSet<Pedido> Pedidos => Set<Pedido>();
+
+    public DbSet<PedidoItem> PedidoItens => Set<PedidoItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -82,6 +86,60 @@ public class MinhaLojaDbContext : DbContext
             usuario.Property(u => u.Perfil)
                 .IsRequired()
                 .HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<Pedido>(pedido =>
+        {
+            pedido.ToTable("Pedidos");
+
+            pedido.HasKey(p => p.Id);
+
+            pedido.Property(p => p.CriadoEmUtc)
+                .HasColumnType("datetime(6)");
+
+            pedido.Property(p => p.Status)
+                .HasConversion<int>()
+                .IsRequired();
+
+            pedido.Property(p => p.Observacao)
+                .HasMaxLength(1000);
+
+            pedido.Property(p => p.Total)
+                .HasPrecision(18, 2);
+
+            pedido.HasOne(p => p.Usuario)
+                .WithMany()
+                .HasForeignKey(p => p.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            pedido.HasIndex(p => new { p.UsuarioId, p.CriadoEmUtc });
+        });
+
+        modelBuilder.Entity<PedidoItem>(item =>
+        {
+            item.ToTable("PedidoItens");
+
+            item.HasKey(i => i.Id);
+
+            item.Property(i => i.NomeProduto)
+                .IsRequired()
+                .HasMaxLength(150);
+
+            item.Property(i => i.PrecoUnitario)
+                .HasPrecision(10, 2);
+
+            item.HasOne(i => i.Pedido)
+                .WithMany(p => p.Itens)
+                .HasForeignKey(i => i.PedidoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            item.HasOne(i => i.Produto)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            item.HasIndex(i => new { i.PedidoId, i.ProdutoId })
+                .IsUnique();
         });
     }
 }
