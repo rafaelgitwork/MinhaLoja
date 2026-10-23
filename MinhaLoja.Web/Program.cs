@@ -47,6 +47,11 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 
+builder.Services.AddHttpClient<PedidoWebService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

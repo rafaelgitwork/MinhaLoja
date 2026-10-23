@@ -1,0 +1,366 @@
+﻿@page "/pedidos"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Funcionario,Administrador")]
+
+@using Microsoft.AspNetCore.Authorization
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using System.Globalization
+@using MinhaLoja.Shared.DTOs.Pedidos
+@using MinhaLoja.Shared.Enums
+@using MinhaLoja.Web.Services
+
+@inject PedidoWebService PedidoService
+
+<PageTitle>Pedidos | MinhaLoja</PageTitle>
+
+<h1>Pedidos</h1>
+
+<div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+    <div>
+        <label for="filtro-status" class="form-label">
+            Status
+        </label>
+
+        <select id="filtro-status"
+                class="form-select"
+                @bind="_statusSelecionado"
+                disabled="@Ocupado">
+            <option value="">Todos</option>
+            <option value="1">Pendente</option>
+            <option value="2">Em preparação</option>
+            <option value="3">Pronto para retirada</option>
+            <option value="4">Concluído</option>
+            <option value="5">Cancelado</option>
+        </select>
+    </div>
+
+    <button type="button"
+            class="btn btn-primary"
+            disabled="@Ocupado"
+            @onclick="AplicarFiltroAsync">
+        Filtrar
+    </button>
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            disabled="@Ocupado"
+            @onclick="AtualizarListaAsync">
+        Atualizar
+    </button>
+</div>
+
+@if (_sucesso is not null)
+{
+    <div class="alert alert-success" role="status">
+        @_sucesso
+    </div>
+}
+
+@if (_erro is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_erro
+
+        @if (_precisaLogin)
+        {
+            <a href="/login"
+               data-enhance-nav="false"
+               class="alert-link ms-2">
+                Entrar novamente
+            </a>
+        }
+    </div>
+}
+
+@if (_carregando)
+{
+    <p>Carregando pedidos...</p>
+}
+else if (_pedidos.Count == 0)
+{
+    <p>Nenhum pedido para exibir.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data (UTC)</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pedido in _pedidos)
+                {
+                    <tr @key="pedido.Id">
+                        <td>#@pedido.Id</td>
+                        <td>@pedido.ClienteNome</td>
+                        <td>
+                            @pedido.CriadoEmUtc.ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td>
+                            <span class="@ClasseStatus(pedido.Status)">
+                                @NomeStatus(pedido.Status)
+                            </span>
+                        </td>
+                        <td>
+                            @pedido.Total.ToString("C", CulturaBrasileira)
+                        </td>
+                        <td>
+                            @if (ProximoStatus(pedido.Status) is not null)
+                            {
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        disabled="@Ocupado"
+                                        @onclick="() => AvancarStatusAsync(pedido)">
+                                    @if (_pedidoEmAtualizacao == pedido.Id)
+                                    {
+                                        <span>Salvando...</span>
+                                    }
+                                    else
+                                    {
+                                        @TextoAcao(pedido.Status)
+                                    }
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Encerrado</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="d-flex gap-3 align-items-center mt-3">
+    <button type="button"
+            class="btn btn-outline-secondary"
+            disabled="@(Ocupado || _pagina <= 1)"
+            @onclick="AnteriorAsync">
+        Anterior
+    </button>
+
+    <span>Página @_pagina</span>
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            disabled="@(Ocupado || _erro is not null || _pedidos.Count < TamanhoPagina)"
+            @onclick="ProximaAsync">
+        Próxima
+    </button>
+</div>
+
+@code {
+    private static readonly CultureInfo CulturaBrasileira =
+        CultureInfo.GetCultureInfo("pt-BR");
+
+    private const int TamanhoPagina = 10;
+
+    private List<PedidoGestaoResponse> _pedidos = new();
+    private string _statusSelecionado = "";
+    private PedidoStatus? _statusAplicado;
+    private int _pagina = 1;
+    private bool _carregando;
+    private int? _pedidoEmAtualizacao;
+    private bool _precisaLogin;
+    private string? _erro;
+    private string? _sucesso;
+
+    private bool Ocupado =>
+        _carregando || _pedidoEmAtualizacao.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private void LimparMensagens()
+    {
+        _erro = null;
+        _sucesso = null;
+        _precisaLogin = false;
+    }
+
+    private async Task AplicarFiltroAsync()
+    {
+        if (Ocupado)
+            return;
+
+        LimparMensagens();
+
+        _statusAplicado = int.TryParse(_statusSelecionado, out var valor)
+            ? (PedidoStatus)valor
+            : null;
+
+        _pagina = 1;
+
+        await CarregarAsync();
+    }
+
+    private async Task AtualizarListaAsync()
+    {
+        if (Ocupado)
+            return;
+
+        LimparMensagens();
+        await CarregarAsync();
+    }
+
+    private async Task AnteriorAsync()
+    {
+        if (Ocupado || _pagina <= 1)
+            return;
+
+        LimparMensagens();
+        _pagina--;
+
+        await CarregarAsync();
+    }
+
+    private async Task ProximaAsync()
+    {
+        if (Ocupado || _pedidos.Count < TamanhoPagina)
+            return;
+
+        LimparMensagens();
+        _pagina++;
+
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        _carregando = true;
+
+        try
+        {
+            _pedidos = await PedidoService.ListarAsync(
+                _statusAplicado,
+                _pagina,
+                TamanhoPagina);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _pedidos.Clear();
+            _erro = ex.Message;
+            _precisaLogin = true;
+        }
+        catch (HttpRequestException)
+        {
+            _pedidos.Clear();
+            _erro = "Não foi possível consultar os pedidos. Tente atualizar.";
+        }
+        catch (TaskCanceledException)
+        {
+            _pedidos.Clear();
+            _erro = "A consulta demorou demais. Tente atualizar.";
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task AvancarStatusAsync(PedidoGestaoResponse pedido)
+    {
+        if (Ocupado)
+            return;
+
+        var novoStatus = ProximoStatus(pedido.Status);
+
+        if (!novoStatus.HasValue)
+            return;
+
+        LimparMensagens();
+        _pedidoEmAtualizacao = pedido.Id;
+
+        try
+        {
+            var erro = await PedidoService.AtualizarStatusAsync(
+                pedido.Id,
+                pedido.Status,
+                novoStatus.Value);
+
+            if (erro is not null)
+            {
+                _erro = erro;
+            }
+            else
+            {
+                _sucesso =
+                    $"Pedido #{pedido.Id}: {NomeStatus(novoStatus.Value)}.";
+            }
+
+            await CarregarAsync();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _erro = ex.Message;
+            _precisaLogin = true;
+        }
+        catch (HttpRequestException)
+        {
+            _erro =
+                "A comunicação falhou. Atualize a lista para conferir " +
+                "o status antes de tentar novamente.";
+        }
+        catch (TaskCanceledException)
+        {
+            _erro =
+                "A operação demorou demais. Atualize a lista para conferir " +
+                "o status antes de tentar novamente.";
+        }
+        finally
+        {
+            _pedidoEmAtualizacao = null;
+        }
+    }
+
+    private static PedidoStatus? ProximoStatus(PedidoStatus status) =>
+        status switch
+        {
+            PedidoStatus.Pendente => PedidoStatus.EmPreparacao,
+            PedidoStatus.EmPreparacao => PedidoStatus.ProntoParaRetirada,
+            PedidoStatus.ProntoParaRetirada => PedidoStatus.Concluido,
+            _ => null
+        };
+
+    private static string TextoAcao(PedidoStatus status) =>
+        status switch
+        {
+            PedidoStatus.Pendente => "Iniciar preparação",
+            PedidoStatus.EmPreparacao => "Marcar pronto",
+            PedidoStatus.ProntoParaRetirada => "Confirmar retirada",
+            _ => ""
+        };
+
+    private static string NomeStatus(PedidoStatus status) =>
+        status switch
+        {
+            PedidoStatus.Pendente => "Pendente",
+            PedidoStatus.EmPreparacao => "Em preparação",
+            PedidoStatus.ProntoParaRetirada => "Pronto para retirada",
+            PedidoStatus.Concluido => "Concluído",
+            PedidoStatus.Cancelado => "Cancelado",
+            _ => "Desconhecido"
+        };
+
+    private static string ClasseStatus(PedidoStatus status) =>
+        status switch
+        {
+            PedidoStatus.Pendente => "badge bg-warning text-dark",
+            PedidoStatus.EmPreparacao => "badge bg-primary",
+            PedidoStatus.ProntoParaRetirada => "badge bg-info text-dark",
+            PedidoStatus.Concluido => "badge bg-success",
+            PedidoStatus.Cancelado => "badge bg-secondary",
+            _ => "badge bg-secondary"
+        };
+}
