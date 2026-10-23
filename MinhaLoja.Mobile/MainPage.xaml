@@ -67,6 +67,7 @@
                         </Border.StrokeShape>
 
                         <VerticalStackLayout Spacing="8">
+                            
                             <Label Text="{Binding Nome}"
                                    FontSize="20"
                                    FontAttributes="Bold" />
@@ -80,6 +81,11 @@
 
                             <Label Text="{Binding QuantidadeEstoque, StringFormat='Estoque: {0} unidades'}"
                                    FontSize="14" />
+                            
+                            <Button Text="Adicionar ao carrinho"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnAdicionarClicked" />
+                            
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

@@ -8,11 +8,16 @@ public partial class MainPage : ContentPage
     private readonly ProdutoApiService _produtoService;
     private bool _carregando;
     private bool _consultaInicialRealizada;
+    private readonly CarrinhoService _carrinho;
 
-    public MainPage(ProdutoApiService produtoService)
+    public MainPage(
+        ProdutoApiService produtoService,
+        CarrinhoService carrinho)
     {
         InitializeComponent();
+
         _produtoService = produtoService;
+        _carrinho = carrinho;
     }
 
     protected override async void OnAppearing()
@@ -82,5 +87,27 @@ public partial class MainPage : ContentPage
         VazioLabel.Text = "Consulta indisponível.";
         ErroLabel.Text = mensagem;
         ErroLabel.IsVisible = true;
+    }
+
+    private async void OnAdicionarClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Button button ||
+            button.CommandParameter is not ProdutoResponse produto)
+        {
+            return;
+        }
+
+        var erro = _carrinho.Adicionar(produto);
+
+        if (erro is not null)
+        {
+            await DisplayAlertAsync("Carrinho", erro, "OK");
+            return;
+        }
+
+        await DisplayAlertAsync(
+            "Carrinho",
+            $"{produto.Nome} foi adicionado.",
+            "OK");
     }
 }

@@ -42,6 +42,10 @@ public static class MauiProgram
         builder.Services.AddSingleton<AuthApiService>();
         builder.Services.AddSingleton<ContaPage>();
 
+        builder.Services.AddSingleton<CarrinhoService>();
+        builder.Services.AddSingleton<PedidoApiService>();
+        builder.Services.AddSingleton<CarrinhoPage>();
+
         return builder.Build();
 	}
 }

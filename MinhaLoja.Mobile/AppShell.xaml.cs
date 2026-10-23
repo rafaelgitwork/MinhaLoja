@@ -4,41 +4,46 @@ namespace MinhaLoja.Mobile;
 
 public partial class AppShell : Shell
 {
-    public AppShell(MainPage mainPage, ContaPage contaPage)
+    public AppShell(
+        MainPage mainPage,
+        CarrinhoPage carrinhoPage,
+        ContaPage contaPage)
     {
         InitializeComponent();
 
         var abas = new TabBar();
 
-        var produtosTab = new Tab
-        {
-            Title = "Produtos",
-            Route = "catalogo"
-        };
+        abas.Items.Add(CriarAba(
+            "Produtos", "catalogo", "produtos", mainPage));
 
-        produtosTab.Items.Add(new ShellContent
-        {
-            Title = "Produtos",
-            Route = "produtos",
-            Content = mainPage
-        });
+        abas.Items.Add(CriarAba(
+            "Carrinho", "compras", "carrinho", carrinhoPage));
 
-        var contaTab = new Tab
-        {
-            Title = "Conta",
-            Route = "minha-conta"
-        };
-
-        contaTab.Items.Add(new ShellContent
-        {
-            Title = "Conta",
-            Route = "conta",
-            Content = contaPage
-        });
-
-        abas.Items.Add(produtosTab);
-        abas.Items.Add(contaTab);
+        abas.Items.Add(CriarAba(
+            "Conta", "minha-conta", "conta", contaPage));
 
         Items.Add(abas);
+    }
+
+    private static Tab CriarAba(
+        string titulo,
+        string rotaAba,
+        string rotaPagina,
+        ContentPage pagina)
+    {
+        var aba = new Tab
+        {
+            Title = titulo,
+            Route = rotaAba
+        };
+
+        aba.Items.Add(new ShellContent
+        {
+            Title = titulo,
+            Route = rotaPagina,
+            Content = pagina
+        });
+
+        return aba;
     }
 }
