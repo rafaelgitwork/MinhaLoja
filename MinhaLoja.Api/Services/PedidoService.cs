@@ -246,4 +246,73 @@ public class PedidoService
 
         return true;
     }
+
+    public async Task<bool> AtualizarStatusAsync(
+    int pedidoId,
+    int operadorId,
+    PedidoStatusUpdateRequest request,
+    CancellationToken cancellationToken = default)
+    {
+        await using var transacao = await _context.Database
+            .BeginTransactionAsync(cancellationToken);
+
+        var operadorAutorizado = await _context.Usuarios.AnyAsync(
+            u => u.Id == operadorId
+                && u.Ativo
+                && (u.Perfil == "Funcionario"
+                    || u.Perfil == "Administrador"),
+            cancellationToken);
+
+        if (!operadorAutorizado)
+        {
+            throw new PedidoRegraException(
+                "O usuário não está ativo ou não possui permissão para esta operação.");
+        }
+
+        var pedidos = await _context.Pedidos
+            .FromSqlInterpolated(
+                $"SELECT * FROM `Pedidos` WHERE `Id` = {pedidoId} FOR UPDATE")
+            .AsTracking()
+            .ToListAsync(cancellationToken);
+
+        var pedido = pedidos.SingleOrDefault();
+
+        if (pedido is null)
+        {
+            return false;
+        }
+
+        if (pedido.Status != request.StatusAtual)
+        {
+            throw new PedidoRegraException(
+                "O pedido foi alterado. Atualize os dados antes de tentar novamente.");
+        }
+
+        PedidoStatus? proximoStatus = pedido.Status switch
+        {
+            PedidoStatus.Pendente => PedidoStatus.EmPreparacao,
+            PedidoStatus.EmPreparacao => PedidoStatus.ProntoParaRetirada,
+            PedidoStatus.ProntoParaRetirada => PedidoStatus.Concluido,
+            _ => null
+        };
+
+        if (proximoStatus is null)
+        {
+            throw new PedidoRegraException(
+                "Pedidos cancelados ou concluídos não podem mudar de status.");
+        }
+
+        if (request.NovoStatus != proximoStatus.Value)
+        {
+            throw new PedidoRegraException(
+                $"A próxima etapa permitida é {proximoStatus.Value}.");
+        }
+
+        pedido.Status = request.NovoStatus;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transacao.CommitAsync(cancellationToken);
+
+        return true;
+    }
 }
