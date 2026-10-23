@@ -2,6 +2,7 @@
 using MinhaLoja.Mobile.Configuracao;
 using MinhaLoja.Mobile.Services;
 using System.Globalization;
+using MinhaLoja.Mobile.Pages;
 
 namespace MinhaLoja.Mobile;
 
@@ -37,6 +38,9 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<AppShell>();
+
+        builder.Services.AddSingleton<AuthApiService>();
+        builder.Services.AddSingleton<ContaPage>();
 
         return builder.Build();
 	}
