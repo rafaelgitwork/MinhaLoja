@@ -174,4 +174,37 @@ public class PedidosController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPost("{id:int}/cancelar")]
+    public async Task<IActionResult> Cancelar(
+    int id,
+    CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(User.FindFirst("sub")?.Value, out var usuarioId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var cancelado = await _pedidoService.CancelarAsync(
+                id, usuarioId, cancellationToken);
+
+            if (!cancelado)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch (PedidoRegraException ex)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Não foi possível cancelar o pedido.",
+                Detail = ex.Message
+            });
+        }
+    }
 }

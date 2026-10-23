@@ -156,4 +156,94 @@ public class PedidoService
             }).ToList()
         };
     }
+
+    public async Task<bool> CancelarAsync(
+    int pedidoId,
+    int usuarioId,
+    CancellationToken cancellationToken = default)
+    {
+        await using var transacao = await _context.Database
+            .BeginTransactionAsync(cancellationToken);
+
+        var clienteAtivo = await _context.Usuarios.AnyAsync(
+            u => u.Id == usuarioId
+                && u.Ativo
+                && u.Perfil == "Cliente",
+            cancellationToken);
+
+        if (!clienteAtivo)
+        {
+            throw new PedidoRegraException(
+                "É necessário possuir uma conta de cliente ativa.");
+        }
+
+        var pedidos = await _context.Pedidos
+            .FromSqlInterpolated(
+                $"""
+            SELECT * FROM `Pedidos`
+            WHERE `Id` = {pedidoId} AND `UsuarioId` = {usuarioId}
+            FOR UPDATE
+            """)
+            .AsTracking()
+            .ToListAsync(cancellationToken);
+
+        var pedido = pedidos.SingleOrDefault();
+
+        if (pedido is null)
+        {
+            return false;
+        }
+
+        if (pedido.Status != PedidoStatus.Pendente)
+        {
+            throw new PedidoRegraException(
+                "Somente pedidos pendentes podem ser cancelados.");
+        }
+
+        var itens = await _context.PedidoItens
+            .AsNoTracking()
+            .Where(i => i.PedidoId == pedido.Id)
+            .OrderBy(i => i.ProdutoId)
+            .ToListAsync(cancellationToken);
+
+        if (itens.Count == 0)
+        {
+            throw new PedidoRegraException(
+                "O pedido está sem itens. O cancelamento precisa ser verificado.");
+        }
+
+        foreach (var item in itens)
+        {
+            var produtos = await _context.Produtos
+                .FromSqlInterpolated(
+                    $"SELECT * FROM `Produtos` WHERE `Id` = {item.ProdutoId} FOR UPDATE")
+                .AsTracking()
+                .ToListAsync(cancellationToken);
+
+            var produto = produtos.SingleOrDefault();
+
+            if (produto is null)
+            {
+                throw new PedidoRegraException(
+                    "Um produto do pedido não foi encontrado.");
+            }
+
+            if (item.Quantidade <= 0
+                || produto.QuantidadeEstoque < 0
+                || produto.QuantidadeEstoque > int.MaxValue - item.Quantidade)
+            {
+                throw new PedidoRegraException(
+                    "Não foi possível devolver o estoque deste pedido.");
+            }
+
+            produto.QuantidadeEstoque += item.Quantidade;
+        }
+
+        pedido.Status = PedidoStatus.Cancelado;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transacao.CommitAsync(cancellationToken);
+
+        return true;
+    }
 }
