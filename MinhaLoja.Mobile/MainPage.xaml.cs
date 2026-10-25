@@ -6,9 +6,10 @@ namespace MinhaLoja.Mobile;
 public partial class MainPage : ContentPage
 {
     private readonly ProdutoApiService _produtoService;
+    private readonly CarrinhoService _carrinho;
+
     private bool _carregando;
     private bool _consultaInicialRealizada;
-    private readonly CarrinhoService _carrinho;
 
     public MainPage(
         ProdutoApiService produtoService,
@@ -44,38 +45,56 @@ public partial class MainPage : ContentPage
 
         _carregando = true;
         AtualizarButton.IsEnabled = false;
+        ProdutosCollection.IsEnabled = false;
         CarregandoIndicator.IsVisible = true;
         CarregandoIndicator.IsRunning = true;
         ErroLabel.IsVisible = false;
+        AvisoCatalogoLabel.IsVisible = false;
+
         VazioLabel.Text = "Carregando produtos...";
 
         try
         {
-            var produtos = await _produtoService.ListarAsync();
+            var resultado = await _produtoService.ObterCatalogoAsync();
 
-            ProdutosCollection.ItemsSource = produtos;
-            VazioLabel.Text = "Nenhum produto disponível.";
+            ProdutosCollection.ItemsSource = resultado.Produtos;
+
+            AvisoCatalogoLabel.Text = resultado.Aviso;
+            AvisoCatalogoLabel.TextColor = resultado.UsandoCache
+                ? Colors.DarkOrange
+                : Colors.Green;
+
+            AvisoCatalogoLabel.IsVisible = true;
+
+            VazioLabel.Text = resultado.UsandoCache
+                ? "O catálogo salvo está vazio."
+                : "Nenhum produto disponível.";
         }
         catch (HttpRequestException)
         {
             MostrarErro(
-                "Não foi possível carregar os produtos. " +
-                "Confira se a API e o MySQL estão rodando.");
+                "Não foi possível consultar o catálogo. " +
+                "Confira a API e tente novamente.");
         }
         catch (TaskCanceledException)
         {
             MostrarErro(
-                "A consulta demorou demais. Toque em Atualizar para tentar novamente.");
+                "A consulta demorou demais. Tente atualizar novamente.");
         }
         catch (System.Text.Json.JsonException)
         {
             MostrarErro(
                 "A API retornou dados em um formato inesperado.");
         }
+        catch (InvalidOperationException ex)
+        {
+            MostrarErro(ex.Message);
+        }
         finally
         {
             _carregando = false;
             AtualizarButton.IsEnabled = true;
+            ProdutosCollection.IsEnabled = true;
             CarregandoIndicator.IsRunning = false;
             CarregandoIndicator.IsVisible = false;
         }
@@ -84,6 +103,7 @@ public partial class MainPage : ContentPage
     private void MostrarErro(string mensagem)
     {
         ProdutosCollection.ItemsSource = Array.Empty<ProdutoResponse>();
+
         VazioLabel.Text = "Consulta indisponível.";
         ErroLabel.Text = mensagem;
         ErroLabel.IsVisible = true;
@@ -91,7 +111,8 @@ public partial class MainPage : ContentPage
 
     private async void OnAdicionarClicked(object? sender, EventArgs e)
     {
-        if (sender is not Button button ||
+        if (_carregando ||
+            sender is not Button button ||
             button.CommandParameter is not ProdutoResponse produto)
         {
             return;

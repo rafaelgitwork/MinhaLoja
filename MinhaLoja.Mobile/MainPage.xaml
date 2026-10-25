@@ -35,10 +35,14 @@
                            IsVisible="False"
                            HorizontalOptions="Center" />
 
-        <Label x:Name="ErroLabel"
-               Grid.Row="2"
-               TextColor="Red"
-               IsVisible="False" />
+        <VerticalStackLayout Grid.Row="2" Spacing="8">
+            <Label x:Name="AvisoCatalogoLabel"
+           IsVisible="False" />
+
+            <Label x:Name="ErroLabel"
+           TextColor="Red"
+           IsVisible="False" />
+        </VerticalStackLayout>
 
         <CollectionView x:Name="ProdutosCollection"
                         Grid.Row="3"
