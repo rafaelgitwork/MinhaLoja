@@ -7,6 +7,7 @@ public partial class AppShell : Shell
     public AppShell(
         MainPage mainPage,
         CarrinhoPage carrinhoPage,
+        MeusPedidosPage meusPedidosPage,
         ContaPage contaPage)
     {
         InitializeComponent();
@@ -18,6 +19,9 @@ public partial class AppShell : Shell
 
         abas.Items.Add(CriarAba(
             "Carrinho", "compras", "carrinho", carrinhoPage));
+
+        abas.Items.Add(CriarAba(
+            "Pedidos", "historico", "meus-pedidos", meusPedidosPage));
 
         abas.Items.Add(CriarAba(
             "Conta", "minha-conta", "conta", contaPage));

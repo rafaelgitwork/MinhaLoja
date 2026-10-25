@@ -86,4 +86,108 @@ public class PedidoApiService
             ?? throw new HttpRequestException(
                 "A API não retornou a confirmação do pedido.");
     }
+
+    public async Task<List<PedidoResponse>> ListarAsync(
+    int pagina,
+    int tamanhoPagina = 10)
+    {
+        using var request = await CriarRequisicaoAutenticadaAsync(
+            HttpMethod.Get,
+            $"api/pedidos?pagina={pagina}&tamanhoPagina={tamanhoPagina}");
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarRespostaAutenticada(response);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<List<PedidoResponse>>() ?? new();
+    }
+
+    public async Task<PedidoResponse> ObterPorIdAsync(int pedidoId)
+    {
+        using var request = await CriarRequisicaoAutenticadaAsync(
+            HttpMethod.Get,
+            $"api/pedidos/{pedidoId}");
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarRespostaAutenticada(response);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new InvalidOperationException(
+                "Pedido não encontrado para sua conta.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<PedidoResponse>()
+            ?? throw new InvalidOperationException(
+                "Não foi possível ler os dados do pedido.");
+    }
+
+    public async Task CancelarAsync(int pedidoId)
+    {
+        using var request = await CriarRequisicaoAutenticadaAsync(
+            HttpMethod.Post,
+            $"api/pedidos/{pedidoId}/cancelar");
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarRespostaAutenticada(response);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new InvalidOperationException(
+                "Pedido não encontrado para sua conta.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new InvalidOperationException(
+                "Esse pedido não pode mais ser cancelado. " +
+                "Atualize a lista para consultar o status atual.");
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async Task<HttpRequestMessage> CriarRequisicaoAutenticadaAsync(
+        HttpMethod metodo,
+        string endereco)
+    {
+        await _authService.RestaurarAsync();
+
+        var token = _authService.ObterToken();
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new InvalidOperationException(
+                "Entre na aba Conta para consultar seus pedidos.");
+        }
+
+        var request = new HttpRequestMessage(metodo, endereco);
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        return request;
+    }
+
+    private static void ValidarRespostaAutenticada(
+        HttpResponseMessage response)
+    {
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            throw new InvalidOperationException(
+                "Sua sessão expirou. Entre novamente na aba Conta.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            throw new InvalidOperationException(
+                "Sua conta não tem permissão para acessar esses pedidos.");
+        }
+    }
 }
