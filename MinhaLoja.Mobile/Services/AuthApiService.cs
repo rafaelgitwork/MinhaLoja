@@ -178,4 +178,78 @@ public class AuthApiService
                 "remover a sessão salva. Tente sair novamente.");
         }
     }
+
+    public async Task CadastrarAsync(
+    string nome,
+    string email,
+    string senha)
+    {
+        var dados = new CadastroRequest
+        {
+            Nome = nome.Trim(),
+            Email = email.Trim(),
+            Senha = senha
+        };
+
+        var resultados = new List<
+            System.ComponentModel.DataAnnotations.ValidationResult>();
+
+        var valido = System.ComponentModel.DataAnnotations.Validator
+            .TryValidateObject(
+                dados,
+                new System.ComponentModel.DataAnnotations.ValidationContext(dados),
+                resultados,
+                validateAllProperties: true);
+
+        if (!valido)
+        {
+            throw new InvalidOperationException(
+                string.Join(
+                    Environment.NewLine,
+                    resultados.Select(r => r.ErrorMessage)));
+        }
+
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/auth/cadastro",
+            dados);
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new InvalidOperationException(
+                "Já existe uma conta com esse e-mail. Use a opção Entrar.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var mensagem = "Confira os dados informados.";
+
+            try
+            {
+                var problema = await response.Content
+                    .ReadFromJsonAsync<ErroValidacaoCadastro>();
+
+                if (problema?.Errors is { Count: > 0 })
+                {
+                    mensagem = string.Join(
+                        Environment.NewLine,
+                        problema.Errors.Values
+                            .SelectMany(erros => erros)
+                            .Distinct());
+                }
+            }
+            catch (JsonException)
+            {
+                // Mantém a mensagem padrão se a resposta não for JSON válido.
+            }
+
+            throw new InvalidOperationException(mensagem);
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    private sealed class ErroValidacaoCadastro
+    {
+        public Dictionary<string, string[]> Errors { get; set; } = new();
+    }
 }

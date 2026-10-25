@@ -45,6 +45,53 @@
 
                 <Button Text="Entrar"
                         Clicked="OnEntrarClicked" />
+
+                <Button Text="Ainda não tenho conta"
+                        Clicked="OnAbrirCadastroClicked" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout x:Name="CadastroLayout"
+                                 IsVisible="False"
+                                 Spacing="12">
+
+                <Label Text="Criar conta"
+                       FontSize="22"
+                       FontAttributes="Bold" />
+
+                <Label Text="Nome" />
+
+                <Entry x:Name="CadastroNomeEntry"
+                       Placeholder="Seu nome"
+                       MaxLength="150" />
+
+                <Label Text="E-mail" />
+
+                <Entry x:Name="CadastroEmailEntry"
+                       Placeholder="seuemail@exemplo.com"
+                       Keyboard="Email"
+                       MaxLength="254"
+                       IsTextPredictionEnabled="False"
+                       IsSpellCheckEnabled="False" />
+
+                <Label Text="Senha — de 15 a 128 caracteres" />
+
+                <Entry x:Name="CadastroSenhaEntry"
+                       Placeholder="Crie sua senha"
+                       IsPassword="True"
+                       MaxLength="128" />
+
+                <Label Text="Confirmar senha" />
+
+                <Entry x:Name="ConfirmacaoSenhaEntry"
+                       Placeholder="Repita sua senha"
+                       IsPassword="True"
+                       MaxLength="128" />
+
+                <Button Text="Criar conta"
+                        Clicked="OnCadastrarClicked" />
+
+                <Button Text="Voltar para entrar"
+                        Clicked="OnVoltarLoginClicked" />
             </VerticalStackLayout>
 
             <VerticalStackLayout x:Name="SessaoLayout"
@@ -65,4 +112,4 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
-</ContentPage>
+</ContentPage> 
