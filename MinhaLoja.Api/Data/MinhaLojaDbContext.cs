@@ -34,6 +34,9 @@ public class MinhaLojaDbContext : DbContext
             categoria.Property(c => c.Nome)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            categoria.HasIndex(c => c.Nome)
+                .IsUnique();
         });
 
         modelBuilder.Entity<Produto>(produto =>

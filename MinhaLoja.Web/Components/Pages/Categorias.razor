@@ -14,7 +14,7 @@
 
 <h1>Categorias</h1>
 
-<p>Cadastre as categorias usadas para organizar os produtos.</p>
+<p>Cadastre, edite e gerencie a disponibilidade das categorias.</p>
 
 @if (_sucesso is not null)
 {
@@ -41,16 +41,18 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <h2 class="h5">Nova categoria</h2>
+        <h2 class="h5">
+            @(_editandoId.HasValue ? "Editar categoria" : "Nova categoria")
+        </h2>
 
         <EditForm Model="_dados"
-                  OnValidSubmit="CadastrarAsync"
-                  FormName="cadastro-categoria">
+                  OnValidSubmit="PrepararSalvarAsync"
+                  FormName="gestao-categoria">
 
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <fieldset disabled="@Ocupado">
+            <fieldset disabled="@(Ocupado || _envioIncerto || _confirmarInativacao)">
                 <div class="mb-3">
                     <label for="nome-categoria" class="form-label">
                         Nome
@@ -64,18 +66,71 @@
                     <ValidationMessage For="@(() => _dados.Nome)" />
                 </div>
 
+                @if (_editandoId.HasValue)
+                {
+                    <div class="form-check mb-3">
+                        <InputCheckbox id="categoria-ativa"
+                                       class="form-check-input"
+                                       @bind-Value="_ativa" />
+
+                        <label for="categoria-ativa"
+                               class="form-check-label">
+                            Categoria ativa
+                        </label>
+                    </div>
+
+                    <p class="text-muted">
+                        Categorias inativas e seus produtos deixam de aparecer
+                        no catálogo online. Pedidos anteriores são preservados.
+                    </p>
+                }
+
                 <button type="submit"
                         class="btn btn-primary"
-                        disabled="@(_precisaLogin || _envioIncerto)">
-                    @(_salvando ? "Salvando..." : "Cadastrar categoria")
+                        disabled="@_precisaLogin">
+                    @(_salvando ? "Salvando..." :
+                        _editandoId.HasValue ? "Salvar alterações" : "Cadastrar")
                 </button>
+
+                @if (_editandoId.HasValue)
+                {
+                    <button type="button"
+                            class="btn btn-outline-secondary ms-2"
+                            @onclick="CancelarEdicao">
+                        Cancelar edição
+                    </button>
+                }
             </fieldset>
         </EditForm>
     </div>
 </div>
 
+@if (_confirmarInativacao)
+{
+    <div class="alert alert-warning" role="alert">
+        <p>
+            Deseja inativar esta categoria?
+            Seus produtos ficarão indisponíveis no catálogo online.
+        </p>
+
+        <button type="button"
+                class="btn btn-danger"
+                disabled="@Ocupado"
+                @onclick="SalvarAsync">
+            Confirmar inativação
+        </button>
+
+        <button type="button"
+                class="btn btn-outline-secondary ms-2"
+                disabled="@Ocupado"
+                @onclick="VoltarDaConfirmacao">
+            Voltar
+        </button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 mb-0">Categorias ativas</h2>
+    <h2 class="h5 mb-0">Categorias cadastradas</h2>
 
     <button type="button"
             class="btn btn-outline-secondary"
@@ -95,17 +150,18 @@ else if (_categorias is null)
 }
 else if (_categorias.Count == 0)
 {
-    <p>Nenhuma categoria ativa cadastrada.</p>
+    <p>Nenhuma categoria cadastrada.</p>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Nome</th>
                     <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,7 +171,19 @@ else
                         <td>@categoria.Id</td>
                         <td>@categoria.Nome</td>
                         <td>
-                            <span class="badge bg-success">Ativa</span>
+                            <span class="@(categoria.Ativa
+                                                                ? "badge bg-success"
+                                                                : "badge bg-secondary")">
+                                @(categoria.Ativa ? "Ativa" : "Inativa")
+                            </span>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-outline-primary btn-sm"
+                                    disabled="@(Ocupado || _envioIncerto || _confirmarInativacao)"
+                                    @onclick="() => Editar(categoria)">
+                                Editar
+                            </button>
                         </td>
                     </tr>
                 }
@@ -127,12 +195,11 @@ else
 @if (_envioIncerto && _categorias is not null && !Ocupado)
 {
     <div class="alert alert-warning">
-        Confira se a categoria já apareceu na lista antes de liberar
-        outro cadastro.
+        Confira o resultado na lista antes de realizar outra alteração.
 
         <button type="button"
                 class="btn btn-outline-dark btn-sm ms-2"
-                @onclick="LiberarCadastro">
+                @onclick="LiberarFormulario">
             Já conferi a lista
         </button>
     </div>
@@ -142,10 +209,15 @@ else
     private CategoriaCreateRequest _dados = new();
     private List<CategoriaResponse>? _categorias;
 
+    private int? _editandoId;
+    private bool _ativa = true;
+    private bool _ativaOriginal = true;
+
     private bool _carregando;
     private bool _salvando;
     private bool _precisaLogin;
     private bool _envioIncerto;
+    private bool _confirmarInativacao;
 
     private string? _erro;
     private string? _sucesso;
@@ -157,6 +229,48 @@ else
         await CarregarAsync();
     }
 
+    private void Editar(CategoriaResponse categoria)
+    {
+        if (Ocupado || _envioIncerto || _confirmarInativacao)
+            return;
+
+        _erro = null;
+        _sucesso = null;
+
+        _editandoId = categoria.Id;
+        _ativa = categoria.Ativa;
+        _ativaOriginal = categoria.Ativa;
+
+        _dados = new CategoriaCreateRequest
+        {
+            Nome = categoria.Nome
+        };
+    }
+
+    private void LimparFormulario()
+    {
+        _dados = new CategoriaCreateRequest();
+        _editandoId = null;
+        _ativa = true;
+        _ativaOriginal = true;
+        _confirmarInativacao = false;
+    }
+
+    private void CancelarEdicao()
+    {
+        if (Ocupado)
+            return;
+
+        LimparFormulario();
+        _erro = null;
+        _sucesso = null;
+    }
+
+    private void VoltarDaConfirmacao()
+    {
+        _confirmarInativacao = false;
+    }
+
     private async Task AtualizarAsync()
     {
         if (Ocupado)
@@ -164,6 +278,7 @@ else
 
         _erro = null;
         _sucesso = null;
+        LimparFormulario();
 
         await CarregarAsync();
     }
@@ -174,7 +289,13 @@ else
 
         try
         {
-            _categorias = await CategoriaService.ListarAsync();
+            _categorias = await CategoriaService.ListarGestaoAsync();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _categorias = null;
+            _precisaLogin = true;
+            _erro = ex.Message;
         }
         catch (HttpRequestException)
         {
@@ -184,12 +305,12 @@ else
         catch (TaskCanceledException)
         {
             _categorias = null;
-            _erro = "A consulta demorou demais. Tente atualizar novamente.";
+            _erro = "A consulta demorou demais. Tente atualizar.";
         }
         catch (System.Text.Json.JsonException)
         {
             _categorias = null;
-            _erro = "A API retornou uma listagem em formato inesperado.";
+            _erro = "A API retornou dados em formato inesperado.";
         }
         finally
         {
@@ -197,7 +318,7 @@ else
         }
     }
 
-    private async Task CadastrarAsync()
+    private async Task PrepararSalvarAsync()
     {
         if (Ocupado || _envioIncerto || _precisaLogin)
             return;
@@ -205,23 +326,57 @@ else
         _erro = null;
         _sucesso = null;
 
-        var nome = _dados.Nome?.Trim() ?? "";
-
-        if (string.IsNullOrWhiteSpace(nome))
+        if (string.IsNullOrWhiteSpace(_dados.Nome))
         {
             _erro = "Informe o nome da categoria.";
             return;
         }
 
+        if (_editandoId.HasValue && _ativaOriginal && !_ativa)
+        {
+            _confirmarInativacao = true;
+            return;
+        }
+
+        await SalvarAsync();
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (Ocupado || _envioIncerto || _precisaLogin)
+            return;
+
         _salvando = true;
+        _erro = null;
+        _sucesso = null;
+
+        var nome = _dados.Nome.Trim();
+        var editando = _editandoId.HasValue;
 
         try
         {
-            var erro = await CategoriaService.CriarAsync(
-                new CategoriaCreateRequest
-                {
-                    Nome = nome
-                });
+            string? erro;
+
+            if (_editandoId is int id)
+            {
+                erro = await CategoriaService.AtualizarAsync(
+                    id,
+                    new CategoriaUpdateRequest
+                    {
+                        Nome = nome,
+                        Ativa = _ativa
+                    });
+            }
+            else
+            {
+                erro = await CategoriaService.CriarAsync(
+                    new CategoriaCreateRequest
+                    {
+                        Nome = nome
+                    });
+            }
+
+            _confirmarInativacao = false;
 
             if (erro is not null)
             {
@@ -229,13 +384,17 @@ else
                 return;
             }
 
-            _dados = new CategoriaCreateRequest();
-            _sucesso = $"Categoria “{nome}” cadastrada com sucesso.";
+            LimparFormulario();
+
+            _sucesso = editando
+                ? $"Categoria “{nome}” atualizada."
+                : $"Categoria “{nome}” cadastrada.";
 
             await CarregarAsync();
         }
         catch (UnauthorizedAccessException ex)
         {
+            _confirmarInativacao = false;
             _precisaLogin = true;
             _erro = ex.Message;
         }
@@ -255,19 +414,19 @@ else
 
     private void RegistrarEnvioIncerto()
     {
+        _confirmarInativacao = false;
         _envioIncerto = true;
         _categorias = null;
 
         _erro =
-            "Não foi possível confirmar o cadastro. A categoria pode ter " +
-            "sido criada antes da falha na resposta. Atualize a lista " +
-            "e confira antes de tentar novamente.";
+            "Não foi possível confirmar a gravação. Atualize a lista " +
+            "e confira o resultado antes de tentar novamente.";
     }
 
-    private void LiberarCadastro()
+    private void LiberarFormulario()
     {
         _envioIncerto = false;
-        _dados = new CategoriaCreateRequest();
         _erro = null;
+        LimparFormulario();
     }
 }

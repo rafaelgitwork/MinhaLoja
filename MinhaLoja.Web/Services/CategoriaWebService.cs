@@ -19,14 +19,88 @@ public class CategoriaWebService
         _authenticationStateProvider = authenticationStateProvider;
     }
 
+    // Usado pelos formulários de produtos: somente categorias ativas.
     public async Task<List<CategoriaResponse>> ListarAsync()
     {
         return await _httpClient
             .GetFromJsonAsync<List<CategoriaResponse>>("api/categorias")
-            ?? new List<CategoriaResponse>();
+            ?? new();
     }
 
-    public async Task<string?> CriarAsync(CategoriaCreateRequest dados)
+    public async Task<List<CategoriaResponse>> ListarGestaoAsync()
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "api/categorias/gestao");
+
+        await AdicionarAutenticacaoAsync(request);
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarAutenticacao(response);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<List<CategoriaResponse>>() ?? new();
+    }
+
+    public Task<string?> CriarAsync(CategoriaCreateRequest dados)
+    {
+        return EnviarAsync(
+            HttpMethod.Post,
+            "api/categorias",
+            dados);
+    }
+
+    public Task<string?> AtualizarAsync(
+        int id,
+        CategoriaUpdateRequest dados)
+    {
+        return EnviarAsync(
+            HttpMethod.Put,
+            $"api/categorias/{id}",
+            dados);
+    }
+
+    private async Task<string?> EnviarAsync<T>(
+        HttpMethod metodo,
+        string endereco,
+        T dados)
+    {
+        using var request = new HttpRequestMessage(metodo, endereco)
+        {
+            Content = JsonContent.Create(dados)
+        };
+
+        await AdicionarAutenticacaoAsync(request);
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarAutenticacao(response);
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            return "Confira o nome da categoria. Ele deve ter de 1 a 100 caracteres.";
+        }
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            return "Já existe uma categoria com esse nome, ativa ou inativa. " +
+                   "Edite ou reative a existente.";
+        }
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return "A categoria não foi encontrada. Atualize a lista.";
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return null;
+    }
+
+    private async Task AdicionarAutenticacaoAsync(
+        HttpRequestMessage request)
     {
         var estado = await _authenticationStateProvider
             .GetAuthenticationStateAsync();
@@ -44,17 +118,13 @@ public class CategoriaWebService
                 "Sua sessão expirou. Entre novamente no painel.");
         }
 
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            "api/categorias");
-
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
+    }
 
-        request.Content = JsonContent.Create(dados);
-
-        using var response = await _httpClient.SendAsync(request);
-
+    private static void ValidarAutenticacao(
+        HttpResponseMessage response)
+    {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             throw new UnauthorizedAccessException(
@@ -64,21 +134,7 @@ public class CategoriaWebService
         if (response.StatusCode == HttpStatusCode.Forbidden)
         {
             throw new UnauthorizedAccessException(
-                "Seu usuário não tem permissão para cadastrar categorias.");
+                "Seu usuário não tem permissão para gerenciar categorias.");
         }
-
-        if (response.StatusCode == HttpStatusCode.BadRequest)
-        {
-            return "Confira o nome da categoria. Ele deve ter de 1 a 100 caracteres.";
-        }
-
-        if (response.StatusCode == HttpStatusCode.Conflict)
-        {
-            return "O cadastro entrou em conflito com os dados existentes. Atualize a lista.";
-        }
-
-        response.EnsureSuccessStatusCode();
-
-        return null;
     }
 }

@@ -35,6 +35,9 @@ namespace MinhaLoja.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Nome")
+                        .IsUnique();
+
                     b.ToTable("Categorias", (string)null);
                 });
 
