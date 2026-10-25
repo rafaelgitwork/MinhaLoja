@@ -1,0 +1,273 @@
+﻿@page "/categorias"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Funcionario,Administrador")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using MinhaLoja.Shared.DTOs.Categorias
+@using MinhaLoja.Web.Services
+
+@inject CategoriaWebService CategoriaService
+
+<PageTitle>Categorias | MinhaLoja</PageTitle>
+
+<h1>Categorias</h1>
+
+<p>Cadastre as categorias usadas para organizar os produtos.</p>
+
+@if (_sucesso is not null)
+{
+    <div class="alert alert-success" role="status">
+        @_sucesso
+    </div>
+}
+
+@if (_erro is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_erro
+
+        @if (_precisaLogin)
+        {
+            <a href="/login"
+               data-enhance-nav="false"
+               class="alert-link ms-2">
+                Entrar novamente
+            </a>
+        }
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5">Nova categoria</h2>
+
+        <EditForm Model="_dados"
+                  OnValidSubmit="CadastrarAsync"
+                  FormName="cadastro-categoria">
+
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <fieldset disabled="@Ocupado">
+                <div class="mb-3">
+                    <label for="nome-categoria" class="form-label">
+                        Nome
+                    </label>
+
+                    <InputText id="nome-categoria"
+                               class="form-control"
+                               maxlength="100"
+                               @bind-Value="_dados.Nome" />
+
+                    <ValidationMessage For="@(() => _dados.Nome)" />
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary"
+                        disabled="@(_precisaLogin || _envioIncerto)">
+                    @(_salvando ? "Salvando..." : "Cadastrar categoria")
+                </button>
+            </fieldset>
+        </EditForm>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">Categorias ativas</h2>
+
+    <button type="button"
+            class="btn btn-outline-secondary"
+            disabled="@Ocupado"
+            @onclick="AtualizarAsync">
+        Atualizar lista
+    </button>
+</div>
+
+@if (_carregando)
+{
+    <p>Carregando categorias...</p>
+}
+else if (_categorias is null)
+{
+    <p>A listagem está indisponível. Tente atualizar.</p>
+}
+else if (_categorias.Count == 0)
+{
+    <p>Nenhuma categoria ativa cadastrada.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var categoria in _categorias)
+                {
+                    <tr @key="categoria.Id">
+                        <td>@categoria.Id</td>
+                        <td>@categoria.Nome</td>
+                        <td>
+                            <span class="badge bg-success">Ativa</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (_envioIncerto && _categorias is not null && !Ocupado)
+{
+    <div class="alert alert-warning">
+        Confira se a categoria já apareceu na lista antes de liberar
+        outro cadastro.
+
+        <button type="button"
+                class="btn btn-outline-dark btn-sm ms-2"
+                @onclick="LiberarCadastro">
+            Já conferi a lista
+        </button>
+    </div>
+}
+
+@code {
+    private CategoriaCreateRequest _dados = new();
+    private List<CategoriaResponse>? _categorias;
+
+    private bool _carregando;
+    private bool _salvando;
+    private bool _precisaLogin;
+    private bool _envioIncerto;
+
+    private string? _erro;
+    private string? _sucesso;
+
+    private bool Ocupado => _carregando || _salvando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private async Task AtualizarAsync()
+    {
+        if (Ocupado)
+            return;
+
+        _erro = null;
+        _sucesso = null;
+
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        _carregando = true;
+
+        try
+        {
+            _categorias = await CategoriaService.ListarAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _categorias = null;
+            _erro = "Não foi possível carregar as categorias. Confira a API.";
+        }
+        catch (TaskCanceledException)
+        {
+            _categorias = null;
+            _erro = "A consulta demorou demais. Tente atualizar novamente.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            _categorias = null;
+            _erro = "A API retornou uma listagem em formato inesperado.";
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task CadastrarAsync()
+    {
+        if (Ocupado || _envioIncerto || _precisaLogin)
+            return;
+
+        _erro = null;
+        _sucesso = null;
+
+        var nome = _dados.Nome?.Trim() ?? "";
+
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            _erro = "Informe o nome da categoria.";
+            return;
+        }
+
+        _salvando = true;
+
+        try
+        {
+            var erro = await CategoriaService.CriarAsync(
+                new CategoriaCreateRequest
+                {
+                    Nome = nome
+                });
+
+            if (erro is not null)
+            {
+                _erro = erro;
+                return;
+            }
+
+            _dados = new CategoriaCreateRequest();
+            _sucesso = $"Categoria “{nome}” cadastrada com sucesso.";
+
+            await CarregarAsync();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _precisaLogin = true;
+            _erro = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            RegistrarEnvioIncerto();
+        }
+        catch (TaskCanceledException)
+        {
+            RegistrarEnvioIncerto();
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+
+    private void RegistrarEnvioIncerto()
+    {
+        _envioIncerto = true;
+        _categorias = null;
+
+        _erro =
+            "Não foi possível confirmar o cadastro. A categoria pode ter " +
+            "sido criada antes da falha na resposta. Atualize a lista " +
+            "e confira antes de tentar novamente.";
+    }
+
+    private void LiberarCadastro()
+    {
+        _envioIncerto = false;
+        _dados = new CategoriaCreateRequest();
+        _erro = null;
+    }
+}
