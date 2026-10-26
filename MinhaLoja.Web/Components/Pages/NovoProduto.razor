@@ -1,4 +1,4 @@
-﻿@page "/produtos/novo"
+@page "/produtos/novo"
 @rendermode InteractiveServer
 @using MinhaLoja.Shared.DTOs.Produtos
 @using MinhaLoja.Shared.DTOs.Categorias
@@ -13,7 +13,7 @@
 
 <PageTitle>Novo produto | MinhaLoja</PageTitle>
 
-<h1>Novo produto</h1>
+<div class="page-heading"><p class="eyebrow">CATÁLOGO / NOVO PRODUTO</p><h1>Novo produto</h1><p>Adicione os detalhes que vão aparecer no catálogo.</p></div>
 
 @if (_erros.Length > 0)
 {
@@ -37,7 +37,7 @@ else if (_categorias.Count == 0)
 }
 else
 {
-    <EditForm Model="_produto"
+    <EditForm class="editor-form" Model="_produto"
               OnValidSubmit="SalvarAsync"
               FormName="novo-produto">
 

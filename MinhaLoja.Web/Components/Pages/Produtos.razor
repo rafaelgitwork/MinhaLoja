@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @page "/produtos"
 @using MinhaLoja.Shared.DTOs.Produtos
 @using MinhaLoja.Web.Services
@@ -7,37 +7,8 @@
 
 <PageTitle>Produtos | MinhaLoja</PageTitle>
 
-<h1>Produtos</h1>
-
-<AuthorizeView>
-    <Authorized Context="sessao">
-        <p>
-            Conectado como:
-            <strong>@sessao.User.Identity?.Name</strong>
-
-            <a href="/sair"
-               data-enhance-nav="false"
-               class="ms-3">
-                Sair
-            </a>
-        </p>
-    </Authorized>
-
-    <NotAuthorized>
-        <p>
-            Você não está conectado.
-            <a href="/login" data-enhance-nav="false">
-                Entrar no painel
-            </a>
-        </p>
-    </NotAuthorized>
-</AuthorizeView>
-
-<AuthorizeView Roles="Funcionario,Administrador">
-    <a href="/produtos/novo" class="btn btn-primary mb-3">
-        Novo produto
-    </a>
-</AuthorizeView>
+<div class="page-heading heading-actions"><div><p class="eyebrow">CATÁLOGO DA LOJA</p><h1>Produtos</h1><p>Todos os seus produtos, com preço e estoque à vista.</p></div>
+<AuthorizeView Roles="Funcionario,Administrador"><a href="/produtos/novo" class="btn btn-primary">+ Novo produto</a></AuthorizeView></div>
 
 @if (_erro is not null)
 {
@@ -55,7 +26,7 @@ else if (_produtos.Count == 0)
 }
 else
 {
-    <table class="table table-striped">
+    <div class="table-responsive"><table class="table table-striped align-middle">
         <thead>
             <tr>
                 <th>Nome</th>
@@ -68,13 +39,13 @@ else
     @foreach (var produto in _produtos)
     {
         <tr>
-            <td>@produto.Nome</td>
+            <td><span class="product-name">@produto.Nome</span><span class="product-code">Produto #@produto.Id</span></td>
 
             <td>
                 @produto.Preco.ToString("C2", CulturaBrasileira)
             </td>
 
-            <td>@produto.QuantidadeEstoque</td>
+            <td><span class="@(produto.QuantidadeEstoque > 0 ? "stock-pill" : "stock-pill empty")">@produto.QuantidadeEstoque unidades</span></td>
 
             <td>
                 <AuthorizeView Roles="Funcionario,Administrador">
@@ -97,7 +68,7 @@ else
         </tr>
     }
 </tbody>
-    </table>
+    </table></div>
 }
 
 @code {

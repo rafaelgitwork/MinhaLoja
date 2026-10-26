@@ -1,4 +1,4 @@
-﻿@page "/produtos/{Id:int}/editar"
+@page "/produtos/{Id:int}/editar"
 @rendermode InteractiveServer
 @using MinhaLoja.Shared.DTOs.Produtos
 @using MinhaLoja.Shared.DTOs.Categorias
@@ -13,7 +13,7 @@
 
 <PageTitle>Editar produto | MinhaLoja</PageTitle>
 
-<h1>Editar produto</h1>
+<div class="page-heading"><p class="eyebrow">CATÁLOGO / EDIÇÃO</p><h1>Editar produto</h1><p>Mantenha as informações do seu produto atualizadas.</p></div>
 
 @if (_erros.Length > 0)
 {
@@ -33,7 +33,7 @@
 }
 else if (_produto is not null)
 {
-    <EditForm Model="_produto"
+    <EditForm class="editor-form" Model="_produto"
               OnValidSubmit="SalvarAsync"
               FormName="editar-produto">
 

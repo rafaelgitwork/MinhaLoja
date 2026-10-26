@@ -1,51 +1,20 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">MinhaLoja.Web</a>
-    </div>
-</div>
-
-<input type="checkbox"
-       title="Navigation menu"
-       class="navbar-toggler" />
-
-<div class="nav-scrollable"
-     onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link"
-                     href=""
-                     Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu"
-                      aria-hidden="true"></span>
-                Início
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="produtos">
-                <span class="bi bi-list-nested-nav-menu"
-                      aria-hidden="true"></span>
-                Produtos
-            </NavLink>
-        </div>
-
+<a class="brand" href="/" aria-label="MinhaLoja — início">
+    <img src="images/marca.svg" width="42" height="42" alt="" />
+    <span>MinhaLoja<small>Seu negócio, em ordem.</small></span>
+</a>
+<input type="checkbox" id="menu-toggle" class="menu-toggle" aria-label="Mostrar ou ocultar menu de navegação" aria-controls="menu-principal" />
+<label class="menu-toggle-label" for="menu-toggle">Menu <span aria-hidden="true">☰</span></label>
+<div class="nav-scrollable" id="menu-principal">
+    <p class="nav-caption">ESPAÇO DA LOJA</p>
+    <nav aria-label="Navegação principal">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All"><span class="nav-symbol" aria-hidden="true">⌂</span> Visão geral</NavLink>
+        <NavLink class="nav-link" href="produtos"><span class="nav-symbol" aria-hidden="true">▦</span> Produtos</NavLink>
         <AuthorizeView Roles="Funcionario,Administrador">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="pedidos">
-                    <span class="bi bi-list-nested-nav-menu"
-                          aria-hidden="true"></span>
-                    Pedidos
-                </NavLink>
-<div class="nav-item px-3">
-    <NavLink class="nav-link" href="categorias">
-        <span class="bi bi-list-nested-nav-menu"
-              aria-hidden="true"></span>
-        Categorias
-    </NavLink>
-</div>
-            </div>
+            <NavLink class="nav-link" href="pedidos"><span class="nav-symbol" aria-hidden="true">≡</span> Pedidos</NavLink>
+            <NavLink class="nav-link" href="categorias"><span class="nav-symbol" aria-hidden="true">◇</span> Categorias</NavLink>
         </AuthorizeView>
     </nav>
+    <div class="sidebar-note"><span class="note-dot" aria-hidden="true"></span><strong>Tudo no seu lugar.</strong><p>Produtos, pedidos e gestão conectados.</p></div>
 </div>

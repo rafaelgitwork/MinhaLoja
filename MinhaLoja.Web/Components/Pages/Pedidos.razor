@@ -1,4 +1,4 @@
-﻿@page "/pedidos"
+@page "/pedidos"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Funcionario,Administrador")]
 
@@ -13,9 +13,9 @@
 
 <PageTitle>Pedidos | MinhaLoja</PageTitle>
 
-<h1>Pedidos</h1>
+<div class="page-heading"><p class="eyebrow">OPERAÇÃO DA LOJA</p><h1>Pedidos</h1><p>Acompanhe cada compra, da confirmação à retirada.</p></div>
 
-<div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+<div class="filter-bar d-flex flex-wrap gap-2 align-items-end mb-3">
     <div>
         <label for="filtro-status" class="form-label">
             Status

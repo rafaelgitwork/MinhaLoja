@@ -1,23 +1,31 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<div class="app-shell">
+    <aside class="sidebar"><NavMenu /></aside>
+    <div class="app-main">
+        <header class="app-topbar">
+            <span class="workspace-label">PAINEL DE GESTÃO <span>/ MinhaLoja</span></span>
+            <AuthorizeView>
+                <Authorized Context="sessao">
+                    <div class="account-menu">
+                        <span class="account-avatar" aria-hidden="true">ML</span>
+                        <span class="account-name">@sessao.User.Identity?.Name</span>
+                        <a href="/sair" data-enhance-nav="false">Sair</a>
+                    </div>
+                </Authorized>
+                <NotAuthorized><a class="btn btn-primary btn-sm" href="/login" data-enhance-nav="false">Entrar no painel</a></NotAuthorized>
+            </AuthorizeView>
+        </header>
+        <main id="conteudo" tabindex="-1" class="main-content">
             @Body
-        </article>
-    </main>
+        </main>
+        <footer class="app-footer"><strong>MinhaLoja</strong><span>Mais organização. Mais cuidado com sua loja.</span></footer>
+    </div>
 </div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+<div id="blazor-error-ui" data-nosnippet role="alert">
+    Não foi possível concluir esta ação. Recarregue a página para continuar.
+    <a href="." class="reload">Recarregar</a>
+    <button type="button" class="dismiss" aria-label="Fechar aviso">×</button>
 </div>

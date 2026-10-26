@@ -1,4 +1,4 @@
-﻿@page "/categorias"
+@page "/categorias"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Funcionario,Administrador")]
 
@@ -12,9 +12,8 @@
 
 <PageTitle>Categorias | MinhaLoja</PageTitle>
 
-<h1>Categorias</h1>
+<div class="page-heading"><p class="eyebrow">ORGANIZAÇÃO DO CATÁLOGO</p><h1>Categorias</h1><p>Cadastre, edite e gerencie a disponibilidade das categorias.</p></div>
 
-<p>Cadastre, edite e gerencie a disponibilidade das categorias.</p>
 
 @if (_sucesso is not null)
 {

@@ -1,7 +1,16 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Home</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<PageTitle>Visão geral | MinhaLoja</PageTitle>
+<div class="page-heading"><p class="eyebrow">BEM-VINDO À MINHALOJA</p><h1>Um novo dia para cuidar da sua loja.</h1><p>Encontre o que precisa e acompanhe cada etapa do seu negócio.</p></div>
+<section class="welcome-banner" aria-labelledby="welcome-title">
+    <div class="welcome-copy"><span class="banner-tag">SIMPLES. CONECTADA. SUA.</span><h2 id="welcome-title">Sua loja organizada.<br />Sua rotina mais leve.</h2><p>Do catálogo à retirada, cada detalhe em um só lugar.</p><a href="/produtos" class="btn btn-lime">Explorar produtos <span aria-hidden="true">↗</span></a></div>
+    <div class="store-illustration" aria-hidden="true"><div class="illustration-orbit"></div><div class="store-card"><span class="store-card-label">MINHALOJA</span><div class="bottle-row"><div class="bottle bottle-green"></div><div class="bottle bottle-blue"></div><div class="bottle bottle-small"></div></div><span class="store-card-line"></span><span class="store-card-line short"></span></div><div class="floating-label">✓ Cada detalhe conta</div></div>
+</section>
+<section class="quick-access" aria-labelledby="quick-title"><div class="section-heading"><h2 id="quick-title">Por onde vamos começar?</h2><span>Acesso rápido</span></div><div class="quick-grid">
+    <a class="quick-card" href="/produtos"><span class="quick-icon" aria-hidden="true">▦</span><h3>Produtos</h3><p>Consulte o catálogo e confira os preços e a disponibilidade.</p><span class="card-link">Ver produtos <span aria-hidden="true">→</span></span></a>
+    <AuthorizeView Roles="Funcionario,Administrador">
+        <Authorized><a class="quick-card" href="/pedidos"><span class="quick-icon blue" aria-hidden="true">≡</span><h3>Pedidos</h3><p>Acompanhe as compras e organize as próximas etapas da retirada.</p><span class="card-link">Gerenciar pedidos <span aria-hidden="true">→</span></span></a><a class="quick-card" href="/categorias"><span class="quick-icon amber" aria-hidden="true">◇</span><h3>Categorias</h3><p>Organize o catálogo e gerencie a disponibilidade das categorias.</p><span class="card-link">Organizar categorias <span aria-hidden="true">→</span></span></a></Authorized>
+        <NotAuthorized><a class="quick-card" href="/login" data-enhance-nav="false"><span class="quick-icon blue" aria-hidden="true">↗</span><h3>Acesso da equipe</h3><p>Entre com sua conta de funcionário ou administrador para gerenciar a loja.</p><span class="card-link">Entrar no painel <span aria-hidden="true">→</span></span></a></NotAuthorized>
+    </AuthorizeView>
+</div></section>

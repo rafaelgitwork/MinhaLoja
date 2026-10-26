@@ -1,4 +1,4 @@
-﻿@page "/pedidos/{Id:int}"
+@page "/pedidos/{Id:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Funcionario,Administrador")]
 
@@ -13,7 +13,7 @@
 
 <PageTitle>Detalhes do pedido | MinhaLoja</PageTitle>
 
-<h1>Pedido #@Id</h1>
+<div class="page-heading"><p class="eyebrow">ACOMPANHAMENTO</p><h1>Pedido #@Id</h1><p>Confira os itens e as informações desta compra.</p></div>
 
 <div class="d-flex gap-2 mb-3">
     <a href="/pedidos" class="btn btn-outline-secondary">

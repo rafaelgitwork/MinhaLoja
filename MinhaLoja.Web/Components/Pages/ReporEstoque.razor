@@ -1,4 +1,4 @@
-﻿@page "/produtos/{Id:int}/estoque"
+@page "/produtos/{Id:int}/estoque"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Funcionario,Administrador")]
 
@@ -12,7 +12,7 @@
 
 <PageTitle>Repor estoque | MinhaLoja</PageTitle>
 
-<h1>Repor estoque</h1>
+<div class="page-heading"><p class="eyebrow">CATÁLOGO / ESTOQUE</p><h1>Repor estoque</h1><p>Registre a chegada de produtos à sua loja.</p></div>
 
 <p>
     <a href="/produtos">Voltar aos produtos</a>

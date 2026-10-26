@@ -1,4 +1,4 @@
-﻿@page "/login"
+@page "/login"
 @attribute [ExcludeFromInteractiveRouting]
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
@@ -12,7 +12,7 @@
 
 <PageTitle>Entrar | MinhaLoja</PageTitle>
 
-<h1>Entrar no painel</h1>
+<div class="login-grid"><section class="login-intro"><span class="eyebrow">ESPAÇO DA EQUIPE</span><h1>Bom ter você<br />por aqui.</h1><p>Um lugar para organizar os produtos, cuidar dos pedidos e fazer a loja acontecer.</p><div class="login-note"><img src="images/marca.svg" width="44" height="44" alt="" /><span>MinhaLoja<strong>Mais perto de cada detalhe.</strong></span></div></section><section class="login-panel" aria-labelledby="login-title"><span class="eyebrow">VAMOS COMEÇAR</span><h2 id="login-title">Entrar no painel</h2><p class="text-muted">Use sua conta de funcionário ou administrador.</p>
 
 @if (_erro is not null)
 {
@@ -50,7 +50,7 @@
     <button type="submit" class="btn btn-primary">
         Entrar
     </button>
-</EditForm>
+</EditForm><p class="login-help">Acesso exclusivo à equipe da loja.</p></section></div>
 
 @code {
     [CascadingParameter]
