@@ -365,20 +365,4 @@ Não há integração de pagamento, cálculo de frete ou envio automático de pe
 - **Sessões por plataforma:** JWT na comunicação com a API, cookie protegido no painel e SecureStorage no aplicativo.
 - **Evolução incremental:** implementação e verificação de fluxos antes do acabamento visual.
 
-## Autoria
-
-Desenvolvido por **Rafael Andrade Dias**, como projeto acadêmico de integração entre aplicação mobile, API e interface Web em C#.
-
 [![GitHub](https://img.shields.io/badge/GitHub-rafaelgitwork-181717?style=flat-square&logo=github)](https://github.com/rafaelgitwork)
-
-**Repositório:** [rafaelgitwork/MinhaLoja](https://github.com/rafaelgitwork/MinhaLoja)
-
-Os projetos de referência analisados durante o desenvolvimento foram utilizados para comparar organização e funcionalidades. A documentação acima descreve as decisões e o escopo da MinhaLoja.
-
----
-
-<div align="center">
-
-**MinhaLoja · Catálogo, pedidos e gestão conectados.**
-
-</div>
