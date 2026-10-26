@@ -1,0 +1,210 @@
+﻿@page "/pedidos/{Id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Funcionario,Administrador")]
+
+@using Microsoft.AspNetCore.Authorization
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using System.Globalization
+@using MinhaLoja.Shared.DTOs.Pedidos
+@using MinhaLoja.Shared.Enums
+@using MinhaLoja.Web.Services
+
+@inject PedidoWebService PedidoService
+
+<PageTitle>Detalhes do pedido | MinhaLoja</PageTitle>
+
+<h1>Pedido #@Id</h1>
+
+<div class="d-flex gap-2 mb-3">
+    <a href="/pedidos" class="btn btn-outline-secondary">
+        Voltar aos pedidos
+    </a>
+
+    <button type="button"
+            class="btn btn-outline-primary"
+            disabled="@_carregando"
+            @onclick="CarregarAsync">
+        Atualizar detalhes
+    </button>
+</div>
+
+@if (_erro is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_erro
+
+        @if (_precisaLogin)
+        {
+            <a href="/login"
+               data-enhance-nav="false"
+               class="alert-link ms-2">
+                Entrar novamente
+            </a>
+        }
+    </div>
+}
+
+@if (_carregando)
+{
+    <p>Carregando detalhes...</p>
+}
+else if (_pedido is not null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5">Informações do pedido</h2>
+
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Cliente</dt>
+                <dd class="col-sm-9">@_pedido.ClienteNome</dd>
+
+                <dt class="col-sm-3">Criado em (UTC)</dt>
+                <dd class="col-sm-9">
+                    @_pedido.CriadoEmUtc.ToString("dd/MM/yyyy HH:mm")
+                </dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">@NomeStatus(_pedido.Status)</dd>
+
+                <dt class="col-sm-3">Observação</dt>
+                <dd class="col-sm-9" style="white-space: pre-wrap;">@(string.IsNullOrWhiteSpace(_pedido.Observacao) ? "Sem observação." : _pedido.Observacao)</dd>
+            </dl>
+        </div>
+    </div>
+
+    <h2 class="h5">Itens do pedido</h2>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th class="text-end">Quantidade</th>
+                    <th class="text-end">Preço unitário</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _pedido.Itens)
+                {
+                    <tr @key="item.ProdutoId">
+                        <td>@item.NomeProduto</td>
+                        <td class="text-end">@item.Quantidade</td>
+                        <td class="text-end">
+                            @item.PrecoUnitario.ToString("C", CulturaBrasileira)
+                        </td>
+                        <td class="text-end">
+                            @item.Subtotal.ToString("C", CulturaBrasileira)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Total</th>
+                    <th class="text-end">
+                        @_pedido.Total.ToString("C", CulturaBrasileira)
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <p class="text-muted">
+        Os nomes e preços dos itens correspondem ao momento da compra.
+        Para alterar o status, volte à lista de pedidos.
+    </p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private static readonly CultureInfo CulturaBrasileira =
+        CultureInfo.GetCultureInfo("pt-BR");
+
+    private PedidoGestaoDetalheResponse? _pedido;
+    private bool _carregando;
+    private bool _precisaLogin;
+    private string? _erro;
+    private int _versaoConsulta;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        var versao = ++_versaoConsulta;
+        var pedidoId = Id;
+
+        _carregando = true;
+        _pedido = null;
+        _erro = null;
+        _precisaLogin = false;
+
+        try
+        {
+            var pedido = await PedidoService.ObterPorIdAsync(pedidoId);
+
+            // Ignora uma resposta antiga se o usuário mudou de pedido.
+            if (versao != _versaoConsulta)
+                return;
+
+            _pedido = pedido;
+
+            if (_pedido is null)
+            {
+                _erro = "Pedido não encontrado.";
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            if (versao != _versaoConsulta)
+                return;
+
+            _erro = ex.Message;
+            _precisaLogin = true;
+        }
+        catch (HttpRequestException)
+        {
+            if (versao != _versaoConsulta)
+                return;
+
+            _erro = "Não foi possível consultar o pedido. Confira a API.";
+        }
+        catch (TaskCanceledException)
+        {
+            if (versao != _versaoConsulta)
+                return;
+
+            _erro = "A consulta demorou demais. Tente atualizar.";
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            if (versao != _versaoConsulta)
+                return;
+
+            _erro = "A API retornou dados em formato inesperado.";
+        }
+        finally
+        {
+            if (versao == _versaoConsulta)
+            {
+                _carregando = false;
+            }
+        }
+    }
+
+    private static string NomeStatus(PedidoStatus status) =>
+        status switch
+        {
+            PedidoStatus.Pendente => "Pendente",
+            PedidoStatus.EmPreparacao => "Em preparação",
+            PedidoStatus.ProntoParaRetirada => "Pronto para retirada",
+            PedidoStatus.Concluido => "Concluído",
+            PedidoStatus.Cancelado => "Cancelado",
+            _ => "Desconhecido"
+        };
+}

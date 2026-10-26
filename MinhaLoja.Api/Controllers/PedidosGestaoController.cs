@@ -141,4 +141,63 @@ public class PedidosGestaoController : ControllerBase
             });
         }
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PedidoGestaoDetalheResponse>> ObterPorId(
+    int id,
+    CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(
+            User.FindFirst("sub")?.Value, out var operadorId))
+        {
+            return Unauthorized();
+        }
+
+        var operadorAutorizado = await _context.Usuarios.AnyAsync(
+            u => u.Id == operadorId
+                && u.Ativo
+                && (u.Perfil == "Funcionario"
+                    || u.Perfil == "Administrador"),
+            cancellationToken);
+
+        if (!operadorAutorizado)
+        {
+            return Forbid();
+        }
+
+        var pedido = await _context.Pedidos
+            .AsNoTracking()
+            .Include(p => p.Usuario)
+            .Include(p => p.Itens)
+            .FirstOrDefaultAsync(
+                p => p.Id == id,
+                cancellationToken);
+
+        if (pedido is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new PedidoGestaoDetalheResponse
+        {
+            Id = pedido.Id,
+            ClienteNome = pedido.Usuario.Nome,
+            CriadoEmUtc = DateTime.SpecifyKind(
+                pedido.CriadoEmUtc,
+                DateTimeKind.Utc),
+            Status = pedido.Status,
+            Observacao = pedido.Observacao,
+            Total = pedido.Total,
+            Itens = pedido.Itens
+                .OrderBy(i => i.Id)
+                .Select(i => new PedidoItemResponse
+                {
+                    ProdutoId = i.ProdutoId,
+                    NomeProduto = i.NomeProduto,
+                    PrecoUnitario = i.PrecoUnitario,
+                    Quantidade = i.Quantidade
+                })
+                .ToList()
+        });
+    }
 }

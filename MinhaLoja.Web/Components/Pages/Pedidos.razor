@@ -112,6 +112,11 @@ else
                             @pedido.Total.ToString("C", CulturaBrasileira)
                         </td>
                         <td>
+                                <a href="@($"/pedidos/{pedido.Id}")"
+                                   class="btn btn-outline-secondary btn-sm me-2">
+                                    Ver detalhes
+                                </a>
+
                             @if (ProximoStatus(pedido.Status) is not null)
                             {
                                 <button type="button"

@@ -88,6 +88,31 @@ public class PedidoWebService
         };
     }
 
+    public async Task<PedidoGestaoDetalheResponse?> ObterPorIdAsync(int id)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"api/gestao/pedidos/{id}");
+
+        await AdicionarAutenticacaoAsync(request);
+
+        using var response = await _httpClient.SendAsync(request);
+
+        ValidarAutenticacao(response);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content
+            .ReadFromJsonAsync<PedidoGestaoDetalheResponse>()
+            ?? throw new System.Text.Json.JsonException(
+                "A API retornou detalhes de pedido inválidos.");
+    }
+
     private async Task AdicionarAutenticacaoAsync(
         HttpRequestMessage request)
     {
