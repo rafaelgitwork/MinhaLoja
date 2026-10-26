@@ -19,8 +19,6 @@ Uma plataforma em C# que conecta clientes, funcionários e estoque em uma única
 
 ---
 
-> **Nota editorial:** README preparado para a apresentação final do projeto. As funcionalidades descritas refletem a implementação acompanhada durante o desenvolvimento; os itens ainda não concluídos ou validados estão identificados na seção **Validação e entrega**. Não representa uma certificação de prontidão para produção.
-
 ## Visão geral
 
 O **MinhaLoja** é um sistema acadêmico de vendas e gestão de produtos, desenvolvido com foco em uma loja de produtos de limpeza. A solução reúne um aplicativo para clientes, uma API responsável pelas regras de negócio e um painel Web para a operação da loja.
