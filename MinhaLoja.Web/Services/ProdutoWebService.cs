@@ -61,6 +61,16 @@ public class ProdutoWebService
             request);
     }
 
+    public async Task<string[]> ReporEstoqueAsync(
+    int id,
+    ProdutoReposicaoRequest request)
+    {
+        return await EnviarAutenticadoAsync(
+            HttpMethod.Post,
+            $"api/produtos/{id}/estoque/reposicoes",
+            request);
+    }
+
     private async Task<string[]> EnviarAutenticadoAsync<T>(
         HttpMethod metodo,
         string endereco,
@@ -134,6 +144,22 @@ public class ProdutoWebService
             }
 
             return new[] { "Confira os dados informados." };
+        }
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            return new[]
+            {
+        "A operação entrou em conflito com o saldo atual. Confira o estoque."
+    };
+        }
+
+        if ((int)response.StatusCode >= 500)
+        {
+            throw new HttpRequestException(
+                "O servidor apresentou uma falha ao processar a operação.",
+                null,
+                response.StatusCode);
         }
 
         return new[]

@@ -161,4 +161,45 @@ public class ProdutosController : ControllerBase
 
         return NoContent();
     }
+
+    [Authorize(Roles = "Funcionario,Administrador")]
+    [HttpPost("{id:int}/estoque/reposicoes")]
+    public async Task<IActionResult> ReporEstoque(
+    int id,
+    ProdutoReposicaoRequest request,
+    CancellationToken cancellationToken)
+    {
+        await using var transacao = await _context.Database
+            .BeginTransactionAsync(cancellationToken);
+
+        // Aguarda outras operações sobre este produto e lê o saldo atual.
+        var produtos = await _context.Produtos
+            .FromSqlInterpolated(
+                $"SELECT * FROM `Produtos` WHERE `Id` = {id} FOR UPDATE")
+            .AsTracking()
+            .ToListAsync(cancellationToken);
+
+        var produto = produtos.SingleOrDefault();
+
+        if (produto is null || !produto.Ativo)
+        {
+            return NotFound();
+        }
+
+        if (produto.QuantidadeEstoque < 0 ||
+            produto.QuantidadeEstoque > int.MaxValue - request.Quantidade)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Não foi possível repor o estoque.",
+                detail: "O saldo atual não permite adicionar essa quantidade.");
+        }
+
+        produto.QuantidadeEstoque += request.Quantidade;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transacao.CommitAsync(cancellationToken);
+
+        return NoContent();
+    }
 }

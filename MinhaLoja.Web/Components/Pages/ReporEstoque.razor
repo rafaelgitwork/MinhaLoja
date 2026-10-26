@@ -1,0 +1,236 @@
+﻿@page "/produtos/{Id:int}/estoque"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Funcionario,Administrador")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using MinhaLoja.Shared.DTOs.Produtos
+@using MinhaLoja.Web.Services
+
+@inject ProdutoWebService ProdutoService
+
+<PageTitle>Repor estoque | MinhaLoja</PageTitle>
+
+<h1>Repor estoque</h1>
+
+<p>
+    <a href="/produtos">Voltar aos produtos</a>
+</p>
+
+@if (_sucesso is not null)
+{
+    <div class="alert alert-success" role="status">
+        @_sucesso
+    </div>
+}
+
+@if (_erros.Length > 0)
+{
+    <div class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+            @foreach (var erro in _erros)
+            {
+                <li>@erro</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (_carregando)
+{
+    <p>Consultando produto...</p>
+}
+else if (_produto is not null)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h2 class="h5">@_produto.Nome</h2>
+
+            <p>
+                Estoque na última consulta:
+                <strong>@_produto.QuantidadeEstoque unidades</strong>
+            </p>
+
+            <p class="text-muted">
+                Informe quantas unidades chegaram.
+                Essa quantidade será somada ao estoque existente.
+            </p>
+
+            <EditForm Model="_dados"
+                      OnValidSubmit="SalvarAsync"
+                      FormName="reposicao-estoque">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <fieldset disabled="@(_salvando || _envioIncerto || _concluido)">
+                    <div class="mb-3">
+                        <label for="quantidade" class="form-label">
+                            Quantidade recebida
+                        </label>
+
+                        <InputNumber id="quantidade"
+                                     class="form-control"
+                                     min="1"
+                                     max="1000000"
+                                     step="1"
+                                     @bind-Value="_dados.Quantidade" />
+
+                        <ValidationMessage For="@(() => _dados.Quantidade)" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        @(_salvando ? "Registrando..." : "Confirmar reposição")
+                    </button>
+                </fieldset>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (_envioIncerto)
+{
+    <div class="alert alert-warning">
+        A reposição pode ter sido registrada antes da falha na resposta.
+        Confira o estoque antes de iniciar outra operação.
+        Não repita o envio automaticamente.
+    </div>
+}
+
+<button type="button"
+        class="btn btn-outline-secondary"
+        disabled="@(_carregando || _salvando)"
+        @onclick="CarregarAsync">
+    Consultar estoque novamente
+</button>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ProdutoResponse? _produto;
+    private ProdutoReposicaoRequest _dados = new() { Quantidade = 1 };
+
+    private bool _carregando;
+    private bool _salvando;
+    private bool _envioIncerto;
+    private bool _concluido;
+
+    private string? _sucesso;
+    private string[] _erros = Array.Empty<string>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _produto = null;
+        _dados = new ProdutoReposicaoRequest { Quantidade = 1 };
+        _envioIncerto = false;
+        _concluido = false;
+        _sucesso = null;
+
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        if (_carregando)
+            return;
+
+        _carregando = true;
+        _erros = Array.Empty<string>();
+
+        try
+        {
+            _produto = await ProdutoService.ObterPorIdAsync(Id);
+
+            if (_produto is null)
+            {
+                _erros = new[]
+                {
+                    "Produto indisponível. Confira se ele e sua categoria estão ativos."
+                };
+            }
+        }
+        catch (HttpRequestException)
+        {
+            _produto = null;
+            _erros = new[] { "Não foi possível consultar o produto." };
+        }
+        catch (TaskCanceledException)
+        {
+            _produto = null;
+            _erros = new[] { "A consulta demorou demais. Tente novamente." };
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            _produto = null;
+            _erros = new[] { "A API retornou dados em formato inesperado." };
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (_salvando || _carregando || _envioIncerto ||
+            _concluido || _produto is null)
+        {
+            return;
+        }
+
+        _salvando = true;
+        _erros = Array.Empty<string>();
+        _sucesso = null;
+
+        var quantidade = _dados.Quantidade;
+
+        try
+        {
+            _erros = await ProdutoService.ReporEstoqueAsync(
+                Id,
+                new ProdutoReposicaoRequest
+                {
+                    Quantidade = quantidade
+                });
+
+            if (_erros.Length > 0)
+                return;
+
+            _concluido = true;
+
+            _sucesso =
+                $"Reposição registrada: {quantidade} unidades adicionadas. " +
+                "Para uma nova reposição, volte à lista de produtos.";
+
+            await CarregarAsync();
+        }
+        catch (HttpRequestException)
+        {
+            RegistrarResultadoIncerto();
+        }
+        catch (TaskCanceledException)
+        {
+            RegistrarResultadoIncerto();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            RegistrarResultadoIncerto();
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+
+    private void RegistrarResultadoIncerto()
+    {
+        _envioIncerto = true;
+
+        _erros = new[]
+        {
+            "Não foi possível confirmar o resultado. O reenvio nesta tela foi bloqueado."
+        };
+    }
+}
