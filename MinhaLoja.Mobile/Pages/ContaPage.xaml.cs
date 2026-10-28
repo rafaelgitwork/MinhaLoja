@@ -5,15 +5,20 @@ namespace MinhaLoja.Mobile.Pages;
 public partial class ContaPage : ContentPage
 {
     private readonly AuthApiService _authService;
+    private readonly CarrinhoService _carrinho;
 
     private bool _ocupado;
     private bool _exibindoCadastro;
 
-    public ContaPage(AuthApiService authService)
+    public ContaPage(
+        AuthApiService authService,
+        CarrinhoService carrinho)
     {
         InitializeComponent();
+
         _authService = authService;
-    }
+        _carrinho = carrinho;
+    } 
 
     protected override async void OnAppearing()
     {
@@ -148,15 +153,44 @@ public partial class ContaPage : ContentPage
 
     private async void OnSairClicked(object? sender, EventArgs e)
     {
+        if (_ocupado)
+            return;
+
+        if (_carrinho.EmEnvio)
+        {
+            MostrarMensagem(
+                "Aguarde o envio do pedido antes de sair.",
+                true);
+
+            return;
+        }
+
         await ExecutarAsync(() =>
         {
-            _authService.Sair();
+            try
+            {
+                _authService.Sair();
+            }
+            finally
+            {
+                // Sair() encerra a sessão em memória mesmo se ocorrer
+                // uma falha ao remover a sessão do armazenamento seguro.
+                _carrinho.LimparAoSair();
 
-            _exibindoCadastro = false;
-            SenhaEntry.Text = "";
-            LimparSenhasCadastro();
+                _exibindoCadastro = false;
 
-            MostrarMensagem("Você saiu da conta.", false);
+                EmailEntry.Text = string.Empty;
+                SenhaEntry.Text = string.Empty;
+
+                CadastroNomeEntry.Text = string.Empty;
+                CadastroEmailEntry.Text = string.Empty;
+
+                LimparSenhasCadastro();
+            }
+
+            MostrarMensagem(
+                "Você saiu da conta. O carrinho foi limpo.",
+                false);
 
             return Task.CompletedTask;
         });

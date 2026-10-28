@@ -51,6 +51,7 @@ public class CarrinhoPage : ContentPage
         _carrinho = carrinho;
         _pedidoService = pedidoService;
         _authService = authService;
+        _carrinho.SessaoEncerrada += OnSessaoEncerrada;
 
         Title = "Carrinho";
 
@@ -85,6 +86,18 @@ public class CarrinhoPage : ContentPage
                 }
             }
         };
+    }
+
+    private void OnSessaoEncerrada()
+    {
+        _observacao.Text = string.Empty;
+
+        _mensagem.Text = string.Empty;
+        _mensagem.IsVisible = false;
+
+        _resultadoIncerto = false;
+
+        AtualizarTela();
     }
 
     protected override void OnAppearing()

@@ -88,4 +88,19 @@ public class CarrinhoService
     {
         _itens.Clear();
     }
+
+    public event Action? SessaoEncerrada;
+
+    public void LimparAoSair()
+    {
+        if (EmEnvio)
+        {
+            throw new InvalidOperationException(
+                "Aguarde o envio do pedido antes de sair.");
+        }
+
+        _itens.Clear();
+
+        SessaoEncerrada?.Invoke();
+    }
 }
