@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using MinhaLoja.Mobile.Visual;
+using System.Globalization;
 using MinhaLoja.Mobile.Services;
 using MinhaLoja.Shared.DTOs.Pedidos;
 using MinhaLoja.Shared.Enums;
@@ -97,19 +98,16 @@ public class MeusPedidosPage : ContentPage
             Content = new VerticalStackLayout
             {
                 Padding = new Thickness(20),
+                MaximumWidthRequest = 760,
+                HorizontalOptions = LayoutOptions.Center,
                 Spacing = 16,
                 Children =
                 {
-                    new Label
-                    {
-                        Text = "Meus pedidos",
-                        FontSize = 28,
-                        FontAttributes = FontAttributes.Bold
-                    },
+                    LojaVisual.Cabecalho("Meus pedidos", "Da preparação à retirada, acompanhe tudo aqui."),
                     _atualizar,
                     _indicador,
                     _mensagem,
-                    _detalhes,
+                    CriarCartaoDetalhes(),
                     _lista,
                     new HorizontalStackLayout
                     {
@@ -190,39 +188,19 @@ public class MeusPedidosPage : ContentPage
                     MostrarDetalhes(atualizado);
                 });
 
-            _lista.Children.Add(new Border
+            var topo = new Grid { ColumnDefinitions = new ColumnDefinitionCollection { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 10 };
+            topo.Add(LojaVisual.Texto($"Pedido #{pedido.Id}", 18, true), 0, 0);
+            topo.Add(LojaVisual.Status(pedido.Status, NomeStatus(pedido.Status)), 1, 0);
+            var rodape = new Grid { ColumnDefinitions = new ColumnDefinitionCollection { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 12 };
+            var valor = LojaVisual.Texto(pedido.Total.ToString("C", Cultura), 22, true);
+            valor.VerticalOptions = LayoutOptions.Center;
+            valor.TextColor = LojaVisual.Verde;
+            rodape.Add(valor, 0, 0); rodape.Add(detalhesButton, 1, 0);
+            _lista.Children.Add(LojaVisual.Cartao(new VerticalStackLayout
             {
-                Padding = new Thickness(14),
-                Content = new VerticalStackLayout
-                {
-                    Spacing = 8,
-                    Children =
-                    {
-                        new Label
-                        {
-                            Text = $"Pedido #{pedido.Id}",
-                            FontSize = 20,
-                            FontAttributes = FontAttributes.Bold
-                        },
-                        new Label
-                        {
-                            Text = NomeStatus(pedido.Status)
-                        },
-                        new Label
-                        {
-                            Text = "Criado em: " +
-                                pedido.CriadoEmUtc.ToLocalTime()
-                                    .ToString("dd/MM/yyyy HH:mm")
-                        },
-                        new Label
-                        {
-                            Text = "Total: " +
-                                pedido.Total.ToString("C", Cultura)
-                        },
-                        detalhesButton
-                    }
-                }
-            });
+                Spacing = 16,
+                Children = { topo, LojaVisual.Legenda("Criado em " + pedido.CriadoEmUtc.ToLocalTime().ToString("dd/MM/yyyy · HH:mm")), rodape }
+            }));
         }
     }
 
@@ -237,10 +215,7 @@ public class MeusPedidosPage : ContentPage
             FontAttributes = FontAttributes.Bold
         });
 
-        _detalhes.Children.Add(new Label
-        {
-            Text = "Status: " + NomeStatus(pedido.Status)
-        });
+        _detalhes.Children.Add(LojaVisual.Status(pedido.Status, NomeStatus(pedido.Status)));
 
         foreach (var item in pedido.Itens)
         {
@@ -273,7 +248,7 @@ public class MeusPedidosPage : ContentPage
             var cancelar = new Button
             {
                 Text = "Cancelar pedido",
-                BackgroundColor = Colors.DarkRed,
+                BackgroundColor = Color.FromArgb("#944539"),
                 TextColor = Colors.White
             };
 
@@ -379,8 +354,15 @@ public class MeusPedidosPage : ContentPage
     private void MostrarMensagem(string texto, bool erro)
     {
         _mensagem.Text = texto;
-        _mensagem.TextColor = erro ? Colors.Red : Colors.Green;
+        _mensagem.TextColor = erro ? LojaVisual.Erro : LojaVisual.Verde;
         _mensagem.IsVisible = true;
+    }
+
+    private Border CriarCartaoDetalhes()
+    {
+        var cartao = LojaVisual.Cartao(_detalhes);
+        cartao.SetBinding(IsVisibleProperty, new Binding(nameof(IsVisible), source: _detalhes));
+        return cartao;
     }
 
     private static string NomeStatus(PedidoStatus status) =>

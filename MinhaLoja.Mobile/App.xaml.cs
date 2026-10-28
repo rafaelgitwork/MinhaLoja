@@ -1,18 +1,13 @@
-﻿namespace MinhaLoja.Mobile;
-
+using Microsoft.Extensions.DependencyInjection;
+namespace MinhaLoja.Mobile;
 public partial class App : Application
 {
-    private readonly AppShell _appShell;
-
-    public App(AppShell appShell)
+    private readonly IServiceProvider _services;
+    public App(IServiceProvider services)
     {
         InitializeComponent();
-        _appShell = appShell;
+        _services = services;
     }
-
-    protected override Window CreateWindow(
-        IActivationState? activationState)
-    {
-        return new Window(_appShell);
-    }
+    protected override Window CreateWindow(IActivationState? activationState) =>
+        new Window(_services.GetRequiredService<AppShell>());
 }

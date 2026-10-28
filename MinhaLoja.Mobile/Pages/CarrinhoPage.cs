@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using MinhaLoja.Mobile.Visual;
+using System.Globalization;
 using MinhaLoja.Mobile.Services;
 
 namespace MinhaLoja.Mobile.Pages;
@@ -60,25 +61,27 @@ public class CarrinhoPage : ContentPage
             Content = new VerticalStackLayout
             {
                 Padding = new Thickness(20),
+                MaximumWidthRequest = 760,
+                HorizontalOptions = LayoutOptions.Center,
                 Spacing = 16,
                 Children =
                 {
-                    new Label
-                    {
-                        Text = "Meu carrinho",
-                        FontSize = 28,
-                        FontAttributes = FontAttributes.Bold
-                    },
+                    LojaVisual.Cabecalho("Minhas compras", "Confira os itens e prepare seu pedido."),
                     _mensagem,
                     _lista,
-                    _total,
-                    new Label
+                    LojaVisual.Cartao(new VerticalStackLayout
                     {
-                        Text = "Total estimado. Preços e disponibilidade " +
-                               "serão confirmados pela API ao finalizar."
-                    },
-                    _observacao,
-                    _finalizar
+                        Spacing = 14,
+                        Children =
+                        {
+                            LojaVisual.Texto("Resumo da compra", 18, true),
+                            _total,
+                            LojaVisual.Legenda("Total estimado. Preços e disponibilidade serão confirmados ao finalizar."),
+                            LojaVisual.Texto("Algum detalhe para a loja?", 13, true),
+                            _observacao,
+                            _finalizar
+                        }
+                    })
                 }
             }
         };
@@ -96,9 +99,9 @@ public class CarrinhoPage : ContentPage
 
         foreach (var item in _carrinho.Itens)
         {
-            var menos = new Button { Text = "−" };
-            var mais = new Button { Text = "+" };
-            var remover = new Button { Text = "Remover" };
+            var menos = LojaVisual.Secundario("−");
+            var mais = LojaVisual.Secundario("+");
+            var remover = LojaVisual.Secundario("Remover");
 
             menos.Clicked += (_, _) =>
                 AlterarQuantidade(item, item.Quantidade - 1);
@@ -112,50 +115,27 @@ public class CarrinhoPage : ContentPage
                 AtualizarTela();
             };
 
-            var controles = new HorizontalStackLayout
+            var quantidade = LojaVisual.Texto(item.Quantidade.ToString(), 15, true);
+            quantidade.VerticalOptions = LayoutOptions.Center;
+            quantidade.HorizontalTextAlignment = TextAlignment.Center;
+            var controles = new Grid
             {
-                Spacing = 10,
-                Children =
-                {
-                    menos,
-                    new Label
-                    {
-                        Text = item.Quantidade.ToString(),
-                        VerticalOptions = LayoutOptions.Center
-                    },
-                    mais,
-                    remover
-                }
+                ColumnDefinitions = new ColumnDefinitionCollection { new(GridLength.Auto), new(new GridLength(40)), new(GridLength.Auto), new(GridLength.Star) },
+                ColumnSpacing = 6
             };
-
-            _lista.Children.Add(new Border
+            controles.Add(menos, 0, 0); controles.Add(quantidade, 1, 0); controles.Add(mais, 2, 0);
+            remover.HorizontalOptions = LayoutOptions.End;
+            controles.Add(remover, 3, 0);
+            var cabecalho = new Grid { ColumnDefinitions = new ColumnDefinitionCollection { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 12 };
+            cabecalho.Add(LojaVisual.Texto(item.Nome, 16, true), 0, 0);
+            var subtotal = LojaVisual.Texto(item.Subtotal.ToString("C", Cultura), 17, true);
+            subtotal.TextColor = LojaVisual.Verde;
+            cabecalho.Add(subtotal, 1, 0);
+            _lista.Children.Add(LojaVisual.Cartao(new VerticalStackLayout
             {
-                Padding = new Thickness(12),
-                Content = new VerticalStackLayout
-                {
-                    Spacing = 8,
-                    Children =
-                    {
-                        new Label
-                        {
-                            Text = item.Nome,
-                            FontSize = 18,
-                            FontAttributes = FontAttributes.Bold
-                        },
-                        new Label
-                        {
-                            Text = "Preço unitário: " +
-                                   item.PrecoUnitario.ToString("C", Cultura)
-                        },
-                        new Label
-                        {
-                            Text = "Subtotal: " +
-                                   item.Subtotal.ToString("C", Cultura)
-                        },
-                        controles
-                    }
-                }
-            });
+                Spacing = 14,
+                Children = { cabecalho, LojaVisual.Legenda(item.PrecoUnitario.ToString("C", Cultura) + " por unidade"), controles }
+            }));
         }
 
         if (_carrinho.Itens.Count == 0)
@@ -285,7 +265,7 @@ public class CarrinhoPage : ContentPage
     private void MostrarMensagem(string texto, bool erro)
     {
         _mensagem.Text = texto;
-        _mensagem.TextColor = erro ? Colors.Red : Colors.Green;
+        _mensagem.TextColor = erro ? LojaVisual.Erro : LojaVisual.Verde;
         _mensagem.IsVisible = true;
     }
 }

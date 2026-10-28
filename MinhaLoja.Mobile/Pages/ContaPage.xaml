@@ -1,115 +1,67 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="MinhaLoja.Mobile.Pages.ContaPage"
-    Title="Minha conta">
+<?xml version='1.0' encoding='utf-8'?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="MinhaLoja.Mobile.Pages.ContaPage" Title="Minha conta">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24"
-                             Spacing="16"
-                             MaximumWidthRequest="500"
-                             HorizontalOptions="Fill">
+        <VerticalStackLayout Padding="22" Spacing="16" MaximumWidthRequest="500" HorizontalOptions="Center">
 
-            <Label Text="Minha conta"
-                   FontSize="28"
-                   FontAttributes="Bold" />
+            <Label Text="Minha conta" Style="{StaticResource Titulo}"/>
 
-            <ActivityIndicator x:Name="CarregandoIndicator"
-                               IsVisible="False"
-                               IsRunning="False" />
+            <ActivityIndicator x:Name="CarregandoIndicator" IsVisible="False" IsRunning="False"/>
 
-            <Label x:Name="MensagemLabel"
-                   IsVisible="False" />
+            <Label x:Name="MensagemLabel" IsVisible="False"/>
 
-            <VerticalStackLayout x:Name="LoginLayout"
-                                 Spacing="12">
+            <Border Padding="22" IsVisible="{Binding IsVisible, Source={x:Reference LoginLayout}}"><VerticalStackLayout x:Name="LoginLayout" Spacing="12">
 
-                <Label Text="Entre para comprar e acompanhar seus pedidos." />
+                <Label Text="Entre para comprar e acompanhar seus pedidos."/>
 
-                <Label Text="E-mail" />
+                <Label Text="E-mail"/>
 
-                <Entry x:Name="EmailEntry"
-                       Placeholder="seuemail@exemplo.com"
-                       Keyboard="Email"
-                       MaxLength="254"
-                       IsTextPredictionEnabled="False"
-                       IsSpellCheckEnabled="False" />
+                <Entry x:Name="EmailEntry" Placeholder="seuemail@exemplo.com" Keyboard="Email" MaxLength="254" IsTextPredictionEnabled="False" IsSpellCheckEnabled="False"/>
 
-                <Label Text="Senha" />
+                <Label Text="Senha"/>
 
-                <Entry x:Name="SenhaEntry"
-                       Placeholder="Digite sua senha"
-                       IsPassword="True"
-                       MaxLength="128" />
+                <Entry x:Name="SenhaEntry" Placeholder="Digite sua senha" IsPassword="True" MaxLength="128"/>
 
-                <Button Text="Entrar"
-                        Clicked="OnEntrarClicked" />
+                <Button Text="Entrar" Clicked="OnEntrarClicked"/>
 
-                <Button Text="Ainda não tenho conta"
-                        Clicked="OnAbrirCadastroClicked" />
+                <Button Text="Ainda não tenho conta" Clicked="OnAbrirCadastroClicked" Style="{StaticResource Secundario}"/>
             </VerticalStackLayout>
 
-            <VerticalStackLayout x:Name="CadastroLayout"
-                                 IsVisible="False"
-                                 Spacing="12">
+            </Border><Border Padding="22" IsVisible="{Binding IsVisible, Source={x:Reference CadastroLayout}}"><VerticalStackLayout x:Name="CadastroLayout" IsVisible="False" Spacing="12">
 
-                <Label Text="Criar conta"
-                       FontSize="22"
-                       FontAttributes="Bold" />
+                <Label Text="Criar conta" FontSize="22" FontAttributes="Bold"/>
 
-                <Label Text="Nome" />
+                <Label Text="Nome"/>
 
-                <Entry x:Name="CadastroNomeEntry"
-                       Placeholder="Seu nome"
-                       MaxLength="150" />
+                <Entry x:Name="CadastroNomeEntry" Placeholder="Seu nome" MaxLength="150"/>
 
-                <Label Text="E-mail" />
+                <Label Text="E-mail"/>
 
-                <Entry x:Name="CadastroEmailEntry"
-                       Placeholder="seuemail@exemplo.com"
-                       Keyboard="Email"
-                       MaxLength="254"
-                       IsTextPredictionEnabled="False"
-                       IsSpellCheckEnabled="False" />
+                <Entry x:Name="CadastroEmailEntry" Placeholder="seuemail@exemplo.com" Keyboard="Email" MaxLength="254" IsTextPredictionEnabled="False" IsSpellCheckEnabled="False"/>
 
-                <Label Text="Senha — de 15 a 128 caracteres" />
+                <Label Text="Senha — de 15 a 128 caracteres"/>
 
-                <Entry x:Name="CadastroSenhaEntry"
-                       Placeholder="Crie sua senha"
-                       IsPassword="True"
-                       MaxLength="128" />
+                <Entry x:Name="CadastroSenhaEntry" Placeholder="Crie sua senha" IsPassword="True" MaxLength="128"/>
 
-                <Label Text="Confirmar senha" />
+                <Label Text="Confirmar senha"/>
 
-                <Entry x:Name="ConfirmacaoSenhaEntry"
-                       Placeholder="Repita sua senha"
-                       IsPassword="True"
-                       MaxLength="128" />
+                <Entry x:Name="ConfirmacaoSenhaEntry" Placeholder="Repita sua senha" IsPassword="True" MaxLength="128"/>
 
-                <Button Text="Criar conta"
-                        Clicked="OnCadastrarClicked" />
+                <Button Text="Criar conta" Clicked="OnCadastrarClicked"/>
 
-                <Button Text="Voltar para entrar"
-                        Clicked="OnVoltarLoginClicked" />
+                <Button Text="Voltar para entrar" Clicked="OnVoltarLoginClicked" Style="{StaticResource Secundario}"/>
             </VerticalStackLayout>
 
-            <VerticalStackLayout x:Name="SessaoLayout"
-                                 IsVisible="False"
-                                 Spacing="12">
+            </Border><Border Padding="22" IsVisible="{Binding IsVisible, Source={x:Reference SessaoLayout}}"><VerticalStackLayout x:Name="SessaoLayout" IsVisible="False" Spacing="12">
 
-                <Label Text="Você está conectado como:"
-                       FontSize="16" />
+                <Label Text="Você está conectado como:" FontSize="16"/>
 
-                <Label x:Name="NomeLabel"
-                       FontSize="22"
-                       FontAttributes="Bold" />
+                <Label x:Name="NomeLabel" FontSize="22" FontAttributes="Bold"/>
 
-                <Label x:Name="EmailUsuarioLabel" />
+                <Label x:Name="EmailUsuarioLabel"/>
 
-                <Button Text="Sair da conta"
-                        Clicked="OnSairClicked" />
+                <Button Text="Sair da conta" Clicked="OnSairClicked" BackgroundColor="#F7E7E2" TextColor="#944539"/>
             </VerticalStackLayout>
-        </VerticalStackLayout>
+        </Border></VerticalStackLayout>
     </ScrollView>
-</ContentPage> 
+</ContentPage>

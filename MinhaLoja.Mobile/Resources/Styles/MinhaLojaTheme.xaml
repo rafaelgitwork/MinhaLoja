@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+<Color x:Key="LojaFundo">#F4F6F2</Color>
+<Style TargetType="ContentPage" ApplyToDerivedTypes="True"><Setter Property="BackgroundColor" Value="#F4F6F2" /></Style>
+<Style TargetType="Label"><Setter Property="TextColor" Value="#203C36" /><Setter Property="FontFamily" Value="OpenSansRegular" /><Setter Property="FontSize" Value="14" /></Style>
+<Style x:Key="Titulo" TargetType="Label"><Setter Property="FontSize" Value="27" /><Setter Property="FontFamily" Value="OpenSansSemibold" /><Setter Property="TextColor" Value="#203C36" /></Style>
+<Style x:Key="Legenda" TargetType="Label"><Setter Property="FontSize" Value="12" /><Setter Property="TextColor" Value="#60736D" /></Style>
+<Style x:Key="Sobrancelha" TargetType="Label"><Setter Property="FontSize" Value="10" /><Setter Property="CharacterSpacing" Value="2" /><Setter Property="FontAttributes" Value="Bold" /><Setter Property="TextColor" Value="#236550" /></Style>
+<Style x:Key="BotaoBase" TargetType="Button"><Setter Property="BackgroundColor" Value="#236550" /><Setter Property="TextColor" Value="White" /><Setter Property="FontFamily" Value="OpenSansSemibold" /><Setter Property="FontSize" Value="13" /><Setter Property="CornerRadius" Value="12" /><Setter Property="Padding" Value="16,10" /><Setter Property="MinimumHeightRequest" Value="46" /><Setter Property="MinimumWidthRequest" Value="46" /><Setter Property="VisualStateManager.VisualStateGroups"><VisualStateGroupList><VisualStateGroup x:Name="CommonStates"><VisualState x:Name="Normal" /><VisualState x:Name="Disabled"><VisualState.Setters><Setter Property="Opacity" Value="0.4" /></VisualState.Setters></VisualState></VisualStateGroup></VisualStateGroupList></Setter></Style>
+<Style TargetType="Button" BasedOn="{StaticResource BotaoBase}" />
+<Style x:Key="Secundario" TargetType="Button" BasedOn="{StaticResource BotaoBase}"><Setter Property="BackgroundColor" Value="#E8EFE6" /><Setter Property="TextColor" Value="#236550" /></Style>
+<Style TargetType="Entry"><Setter Property="BackgroundColor" Value="#F0F4ED" /><Setter Property="TextColor" Value="#203C36" /><Setter Property="PlaceholderColor" Value="#687B70" /><Setter Property="FontSize" Value="14" /><Setter Property="MinimumHeightRequest" Value="48" /></Style>
+<Style TargetType="Editor"><Setter Property="BackgroundColor" Value="White" /><Setter Property="TextColor" Value="#203C36" /><Setter Property="PlaceholderColor" Value="#687B70" /><Setter Property="FontSize" Value="14" /></Style>
+<Style TargetType="ActivityIndicator"><Setter Property="Color" Value="#236550" /></Style>
+<Style x:Key="BordaBase" TargetType="Border"><Setter Property="BackgroundColor" Value="White" /><Setter Property="Stroke" Value="#E0E7DC" /><Setter Property="StrokeThickness" Value="1" /><Setter Property="StrokeShape"><Setter.Value><RoundRectangle CornerRadius="18" /></Setter.Value></Setter></Style>
+<Style TargetType="Border" BasedOn="{StaticResource BordaBase}" />
+<Style x:Key="Cartao" TargetType="Border" BasedOn="{StaticResource BordaBase}"><Setter Property="Padding" Value="22" /></Style>
+</ResourceDictionary>

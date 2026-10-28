@@ -1,4 +1,5 @@
-﻿using MinhaLoja.Mobile.Pages;
+using MinhaLoja.Mobile.Visual;
+using MinhaLoja.Mobile.Pages;
 
 namespace MinhaLoja.Mobile;
 
@@ -12,6 +13,10 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
+        LojaVisual.Navegacao(mainPage, "catalogo");
+        LojaVisual.Navegacao(carrinhoPage, "compras");
+        LojaVisual.Navegacao(meusPedidosPage, "historico");
+        LojaVisual.Navegacao(contaPage, "minha-conta");
         var abas = new TabBar();
 
         abas.Items.Add(CriarAba(

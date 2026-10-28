@@ -1,99 +1,14 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:produtos="clr-namespace:MinhaLoja.Shared.DTOs.Produtos;assembly=MinhaLoja.Shared"
-    x:Class="MinhaLoja.Mobile.MainPage"
-    Title="Produtos">
-
-    <Grid Padding="20"
-          RowDefinitions="Auto,Auto,Auto,*"
-          RowSpacing="16">
-
-        <Grid ColumnDefinitions="*,Auto"
-              ColumnSpacing="12">
-
-            <VerticalStackLayout Spacing="4">
-                <Label Text="MinhaLoja"
-                       FontSize="28"
-                       FontAttributes="Bold" />
-
-                <Label Text="Confira nossos produtos."
-                       FontSize="14" />
-            </VerticalStackLayout>
-
-            <Button x:Name="AtualizarButton"
-                    Grid.Column="1"
-                    Text="Atualizar"
-                    VerticalOptions="Center"
-                    Clicked="OnAtualizarClicked" />
-        </Grid>
-
-        <ActivityIndicator x:Name="CarregandoIndicator"
-                           Grid.Row="1"
-                           IsRunning="False"
-                           IsVisible="False"
-                           HorizontalOptions="Center" />
-
-        <VerticalStackLayout Grid.Row="2" Spacing="8">
-            <Label x:Name="AvisoCatalogoLabel"
-           IsVisible="False" />
-
-            <Label x:Name="ErroLabel"
-           TextColor="Red"
-           IsVisible="False" />
-        </VerticalStackLayout>
-
-        <CollectionView x:Name="ProdutosCollection"
-                        Grid.Row="3"
-                        SelectionMode="None">
-
-            <CollectionView.EmptyView>
-                <Label x:Name="VazioLabel"
-                       Text="Aguardando consulta..."
-                       Margin="0,20"
-                       HorizontalTextAlignment="Center" />
-            </CollectionView.EmptyView>
-
-            <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical"
-                                   ItemSpacing="12" />
-            </CollectionView.ItemsLayout>
-
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="produtos:ProdutoResponse">
-                    <Border Padding="16"
-                            Stroke="#D1D5DB"
-                            StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="8">
-                            
-                            <Label Text="{Binding Nome}"
-                                   FontSize="20"
-                                   FontAttributes="Bold" />
-
-                            <Label Text="{Binding Descricao}"
-                                   FontSize="14" />
-
-                            <Label Text="{Binding Preco, StringFormat='Preço: R$ {0:N2}'}"
-                                   FontSize="18"
-                                   FontAttributes="Bold" />
-
-                            <Label Text="{Binding QuantidadeEstoque, StringFormat='Estoque: {0} unidades'}"
-                                   FontSize="14" />
-                            
-                            <Button Text="Adicionar ao carrinho"
-                                    CommandParameter="{Binding .}"
-                                    Clicked="OnAdicionarClicked" />
-                            
-                        </VerticalStackLayout>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
-</ContentPage>
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:produtos="clr-namespace:MinhaLoja.Shared.DTOs.Produtos;assembly=MinhaLoja.Shared" x:Class="MinhaLoja.Mobile.MainPage" Title="Catálogo">
+<Grid Padding="20,22,20,8" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="14" MaximumWidthRequest="1120">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12"><VerticalStackLayout Spacing="5"><Label Text="MINHALOJA" Style="{StaticResource Sobrancelha}" /><Label Text="Seu catálogo" Style="{StaticResource Titulo}" /><Label Text="Cuidado para sua casa, em cada escolha." Style="{StaticResource Legenda}" /></VerticalStackLayout><Button x:Name="AtualizarButton" Grid.Column="1" Text="Atualizar" Style="{StaticResource Secundario}" VerticalOptions="Center" Clicked="OnAtualizarClicked" /></Grid>
+    <ActivityIndicator x:Name="CarregandoIndicator" Grid.Row="1" IsRunning="False" IsVisible="False" />
+    <VerticalStackLayout Grid.Row="2" Spacing="5"><Label x:Name="AvisoCatalogoLabel" Style="{StaticResource Legenda}" IsVisible="False" /><Label x:Name="ErroLabel" TextColor="#944539" IsVisible="False" /></VerticalStackLayout>
+    <CollectionView x:Name="ProdutosCollection" Grid.Row="3" SelectionMode="None"><CollectionView.ItemsLayout><GridItemsLayout x:Name="GradeProdutos" Orientation="Vertical" Span="1" HorizontalItemSpacing="14" VerticalItemSpacing="14" /></CollectionView.ItemsLayout>
+    <CollectionView.EmptyView><Label x:Name="VazioLabel" Text="Aguardando consulta..." Margin="20" HorizontalTextAlignment="Center" /></CollectionView.EmptyView>
+    <CollectionView.ItemTemplate><DataTemplate x:DataType="produtos:ProdutoResponse"><Border Padding="16" Margin="0,0,0,2"><Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="76,*" RowSpacing="14" ColumnSpacing="14">
+        <Image Source="produto_catalogo.png" HeightRequest="76" WidthRequest="76" VerticalOptions="Start" SemanticProperties.Description="Ilustração de produto de limpeza" />
+        <VerticalStackLayout Grid.Column="1" Spacing="5"><Label Text="{Binding Nome}" FontFamily="OpenSansSemibold" FontSize="16" MaxLines="2" LineBreakMode="TailTruncation" /><Label Text="{Binding Descricao}" Style="{StaticResource Legenda}" MaxLines="2" LineBreakMode="TailTruncation" /><Label Text="{Binding QuantidadeEstoque, StringFormat='{0} unidades disponíveis'}" Style="{StaticResource Legenda}" /></VerticalStackLayout>
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" ColumnSpacing="8"><VerticalStackLayout Spacing="2"><Label Text="PREÇO UNITÁRIO" FontSize="9" CharacterSpacing="1" TextColor="#60736D" /><Label Text="{Binding Preco, StringFormat='R$ {0:N2}'}" FontSize="23" FontFamily="OpenSansSemibold" TextColor="#236550" /></VerticalStackLayout><Button Grid.Column="1" Text="+ Adicionar" CommandParameter="{Binding .}" Clicked="OnAdicionarClicked" VerticalOptions="Center" /></Grid>
+    </Grid></Border></DataTemplate></CollectionView.ItemTemplate></CollectionView>
+</Grid></ContentPage>

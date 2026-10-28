@@ -1,4 +1,4 @@
-﻿using MinhaLoja.Mobile.Services;
+using MinhaLoja.Mobile.Services;
 using MinhaLoja.Shared.DTOs.Produtos;
 
 namespace MinhaLoja.Mobile;
@@ -19,6 +19,7 @@ public partial class MainPage : ContentPage
 
         _produtoService = produtoService;
         _carrinho = carrinho;
+        SizeChanged += (_, _) => GradeProdutos.Span = Width >= 1000 ? 3 : Width >= 680 ? 2 : 1;
     }
 
     protected override async void OnAppearing()
